@@ -53,6 +53,7 @@ private:
     void drawGrid(QPainter& painter);
     void drawOrigin(QPainter& painter);
     void drawSiteAndBuildings(QPainter& painter);
+    void drawNorthArrow(QPainter& painter);
 
     ViewportState m_state;
     GridSettings m_grid;

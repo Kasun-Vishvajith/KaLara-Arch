@@ -8,6 +8,7 @@ add_library(kalara_architecture
     include/kalara/architecture/opening.hpp
     include/kalara/architecture/room.hpp
     include/kalara/architecture/room_boundary_detector.hpp
+    include/kalara/architecture/annotation.hpp
     include/kalara/architecture/level.hpp
     include/kalara/architecture/building.hpp
     include/kalara/architecture/site.hpp
@@ -19,6 +20,7 @@ add_library(kalara_architecture
     src/opening.cpp
     src/room.cpp
     src/room_boundary_detector.cpp
+    src/annotation.cpp
 )
 
 target_include_directories(kalara_architecture PUBLIC

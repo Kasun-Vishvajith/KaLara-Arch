@@ -84,3 +84,15 @@ target_link_libraries(test_opening PRIVATE
 
 target_compile_features(test_opening PRIVATE cxx_std_20)
 add_test(NAME opening_test COMMAND test_opening)
+
+add_executable(test_annotation
+    test_annotation.cpp
+)
+
+target_link_libraries(test_annotation PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_annotation PRIVATE cxx_std_20)
+add_test(NAME annotation_test COMMAND test_annotation)

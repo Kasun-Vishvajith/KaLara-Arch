@@ -50,11 +50,17 @@ MainWindow::MainWindow(QWidget *parent)
         if (walls.size() >= 4) {
             ground.addDoor(walls[0]->id, 2500.0, 900.0, 2100.0, kalara::architecture::DoorSwing::LeftInswing);
             ground.addWindow(walls[2]->id, 2500.0, 1500.0, 1200.0, 900.0, kalara::architecture::WindowType::Casement);
+
+            // Add associative dimension along South wall (Rule 7)
+            ground.addDimensionForWall(*walls[0], -600.0);
+
+            // Add note annotation
+            ground.addNote({-2300.0, 1600.0}, "Living Room Area: 18.2 m² [Finish: Parquet]");
         }
     }
 
     setupUI();
-    kalara::core::Logger::info("MainWindow with 2D Viewport, Walls, Rooms & Openings initialized.");
+    kalara::core::Logger::info("MainWindow with 2D Viewport, Walls, Rooms, Openings & Dimensions initialized.");
 }
 
 void MainWindow::setupUI() {

@@ -233,9 +233,96 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
                     painter.setPen(QPen(QColor(240, 245, 255), 1.5));
                     painter.drawLine(QPointF(s1.x, s1.y), QPointF(s2.x, s2.y));
                 }
+
+                // 6. Draw Associative Dimensions (extension lines, dimension line, ticks, text)
+                for (const auto& dim : lvl->dimensions()) {
+                    bool isSelected = m_selection.isSelected(dim->id);
+                    auto [d1, d2] = dim->dimensionLine();
+
+                    auto p1s = m_state.worldToScreen(dim->point1);
+                    auto p2s = m_state.worldToScreen(dim->point2);
+                    auto d1s = m_state.worldToScreen(d1);
+                    auto d2s = m_state.worldToScreen(d2);
+
+                    QColor dimColor = isSelected ? QColor(80, 220, 240) : QColor(210, 215, 225);
+                    painter.setPen(QPen(dimColor, 1));
+
+                    // Extension witness lines
+                    painter.drawLine(QPointF(p1s.x, p1s.y), QPointF(d1s.x, d1s.y));
+                    painter.drawLine(QPointF(p2s.x, p2s.y), QPointF(d2s.x, d2s.y));
+
+                    // Dimension line
+                    painter.setPen(QPen(dimColor, 1.5));
+                    painter.drawLine(QPointF(d1s.x, d1s.y), QPointF(d2s.x, d2s.y));
+
+                    // 45-degree architectural slash ticks at endpoints
+                    double tick = 5.0;
+                    painter.drawLine(QPointF(d1s.x - tick, d1s.y + tick), QPointF(d1s.x + tick, d1s.y - tick));
+                    painter.drawLine(QPointF(d2s.x - tick, d2s.y + tick), QPointF(d2s.x + tick, d2s.y - tick));
+
+                    // Dimension text centered along dimension line
+                    double midX = (d1s.x + d2s.x) * 0.5;
+                    double midY = (d1s.y + d2s.y) * 0.5;
+
+                    QFont font = painter.font();
+                    font.setPointSize(8);
+                    painter.setFont(font);
+
+                    QString distStr = QString::fromStdString(dim->formattedText(m_project->displayUnit));
+                    QRectF textRect(midX - 50.0, midY - 18.0, 100.0, 20.0);
+                    painter.drawText(textRect, Qt::AlignCenter, distStr);
+                }
+
+                // 7. Draw Notes & Annotations
+                for (const auto& note : lvl->notes()) {
+                    auto pScreen = m_state.worldToScreen(note->position);
+                    painter.setPen(QColor(230, 230, 180));
+                    QFont font = painter.font();
+                    font.setPointSize(8);
+                    painter.setFont(font);
+                    painter.drawText(QPointF(pScreen.x, pScreen.y), QString::fromStdString(note->text));
+                }
             }
         }
     }
+
+    // 8. Draw North Arrow in top-right viewport corner
+    drawNorthArrow(painter);
+}
+
+void ViewportWidget::drawNorthArrow(QPainter& painter) {
+    double nx = m_state.viewportWidth - 60.0;
+    double ny = 60.0;
+
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // North arrow circle & pointer
+    painter.setPen(QPen(QColor(180, 185, 195), 1.5));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(QPointF(nx, ny), 22.0, 22.0);
+
+    // Arrow pointer towards North (-Y in screen space)
+    QPolygonF arrow;
+    arrow << QPointF(nx, ny - 18.0) << QPointF(nx + 6.0, ny + 10.0) << QPointF(nx, ny + 4.0);
+    painter.setBrush(QColor(220, 60, 60));
+    painter.setPen(Qt::NoPen);
+    painter.drawPolygon(arrow);
+
+    QPolygonF arrowLeft;
+    arrowLeft << QPointF(nx, ny - 18.0) << QPointF(nx - 6.0, ny + 10.0) << QPointF(nx, ny + 4.0);
+    painter.setBrush(QColor(180, 185, 195));
+    painter.drawPolygon(arrowLeft);
+
+    // "N" label
+    QFont font = painter.font();
+    font.setPointSize(8);
+    font.setBold(true);
+    painter.setFont(font);
+    painter.setPen(QColor(240, 240, 240));
+    painter.drawText(QRectF(nx - 15.0, ny - 38.0, 30.0, 20.0), Qt::AlignCenter, "N");
+
+    painter.restore();
 }
 
 void ViewportWidget::mousePressEvent(QMouseEvent *event) {

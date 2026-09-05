@@ -5,6 +5,7 @@
 #include "kalara/architecture/wall.hpp"
 #include "kalara/architecture/room.hpp"
 #include "kalara/architecture/opening.hpp"
+#include "kalara/architecture/annotation.hpp"
 #include "kalara/architecture/room_boundary_detector.hpp"
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@
 namespace kalara::architecture {
 
 /// Architectural Level / Story (Principle 5).
-/// Stores walls, rooms, doors, windows, elevation, and geometric elements.
+/// Stores walls, rooms, openings, dimensions, and annotations.
 class Level {
 public:
     EntityId id;
@@ -49,8 +50,8 @@ public:
     }
 
     bool removeWall(const EntityId& wallId) {
-        // Also remove hosted openings on this wall
         removeOpeningsForWall(wallId);
+        removeDimensionsForWall(wallId);
 
         for (auto it = m_walls.begin(); it != m_walls.end(); ++it) {
             if ((*it)->id == wallId) {
@@ -97,7 +98,7 @@ public:
         return addedCount;
     }
 
-    // --- Door & Window Management (hosted by walls) ---
+    // --- Door & Window Management ---
     Door& addDoor(const EntityId& hostWallId, double offsetAlongWall_mm = 1000.0, double width_mm = 900.0, double height_mm = 2100.0, DoorSwing swing = DoorSwing::LeftInswing) {
         m_doors.emplace_back(std::make_unique<Door>(hostWallId, offsetAlongWall_mm, width_mm, height_mm, swing));
         return *m_doors.back();
@@ -108,51 +109,53 @@ public:
         return *m_windows.back();
     }
 
-    [[nodiscard]] const std::vector<std::unique_ptr<Door>>& doors() const noexcept {
-        return m_doors;
-    }
-
-    [[nodiscard]] const std::vector<std::unique_ptr<Window>>& windows() const noexcept {
-        return m_windows;
-    }
-
-    [[nodiscard]] Door* findDoor(const EntityId& doorId) const noexcept {
-        for (const auto& d : m_doors) {
-            if (d->id == doorId) return d.get();
-        }
-        return nullptr;
-    }
-
-    [[nodiscard]] Window* findWindow(const EntityId& windowId) const noexcept {
-        for (const auto& w : m_windows) {
-            if (w->id == windowId) return w.get();
-        }
-        return nullptr;
-    }
-
-    bool removeDoor(const EntityId& doorId) {
-        for (auto it = m_doors.begin(); it != m_doors.end(); ++it) {
-            if ((*it)->id == doorId) {
-                m_doors.erase(it);
-                return true;
-            }
-        }
-        return false;
-    }
-
-    bool removeWindow(const EntityId& windowId) {
-        for (auto it = m_windows.begin(); it != m_windows.end(); ++it) {
-            if ((*it)->id == windowId) {
-                m_windows.erase(it);
-                return true;
-            }
-        }
-        return false;
-    }
+    [[nodiscard]] const std::vector<std::unique_ptr<Door>>& doors() const noexcept { return m_doors; }
+    [[nodiscard]] const std::vector<std::unique_ptr<Window>>& windows() const noexcept { return m_windows; }
 
     void removeOpeningsForWall(const EntityId& wallId) {
         std::erase_if(m_doors, [&](const auto& d) { return d->hostWallId == wallId; });
         std::erase_if(m_windows, [&](const auto& w) { return w->hostWallId == wallId; });
+    }
+
+    // --- Dimension & Annotation Management (Step 08) ---
+    Dimension& addDimension(kalara::core::geometry::Point2D p1, kalara::core::geometry::Point2D p2, double offset = 500.0) {
+        m_dimensions.emplace_back(std::make_unique<Dimension>(p1, p2, offset));
+        return *m_dimensions.back();
+    }
+
+    Dimension& addDimensionForWall(const Wall& wall, double offset = 500.0) {
+        m_dimensions.emplace_back(std::make_unique<Dimension>(wall.id, wall, offset));
+        return *m_dimensions.back();
+    }
+
+    [[nodiscard]] const std::vector<std::unique_ptr<Dimension>>& dimensions() const noexcept {
+        return m_dimensions;
+    }
+
+    void syncDimensions() {
+        for (auto& dim : m_dimensions) {
+            if (dim->referencedEntityId.has_value()) {
+                auto* wall = findWall(dim->referencedEntityId.value());
+                if (wall) {
+                    dim->syncWithReferencedWall(*wall);
+                }
+            }
+        }
+    }
+
+    void removeDimensionsForWall(const EntityId& wallId) {
+        std::erase_if(m_dimensions, [&](const auto& dim) {
+            return dim->referencedEntityId.has_value() && dim->referencedEntityId.value() == wallId;
+        });
+    }
+
+    NoteAnnotation& addNote(kalara::core::geometry::Point2D pos, std::string text) {
+        m_notes.emplace_back(std::make_unique<NoteAnnotation>(pos, std::move(text)));
+        return *m_notes.back();
+    }
+
+    [[nodiscard]] const std::vector<std::unique_ptr<NoteAnnotation>>& notes() const noexcept {
+        return m_notes;
     }
 
 private:
@@ -160,6 +163,8 @@ private:
     std::vector<std::unique_ptr<Room>> m_rooms;
     std::vector<std::unique_ptr<Door>> m_doors;
     std::vector<std::unique_ptr<Window>> m_windows;
+    std::vector<std::unique_ptr<Dimension>> m_dimensions;
+    std::vector<std::unique_ptr<NoteAnnotation>> m_notes;
 };
 
 } // namespace kalara::architecture
