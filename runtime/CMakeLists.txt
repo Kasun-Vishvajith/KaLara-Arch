@@ -1,0 +1,15 @@
+add_library(kalara_runtime
+    include/kalara/runtime/runtime_context.hpp
+    src/runtime_context.cpp
+)
+
+target_include_directories(kalara_runtime PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+target_link_libraries(kalara_runtime PUBLIC
+    kalara_architecture
+)
+
+target_compile_features(kalara_runtime PUBLIC cxx_std_20)
