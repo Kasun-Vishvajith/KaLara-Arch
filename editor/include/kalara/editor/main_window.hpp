@@ -22,11 +22,13 @@ private slots:
     void onCursorCoordinatesChanged(double x_mm, double y_mm);
     void onZoomChanged(double scale);
     void onSelectionChanged();
+    void onPlaceLibraryItem(const std::string& itemId);
 
 private:
     void setupUI();
 
     ViewportWidget *m_viewport = nullptr;
+    class LibraryBrowserWidget *m_libraryBrowser = nullptr;
     QLabel *m_coordLabel = nullptr;
     QLabel *m_zoomLabel = nullptr;
     QLabel *m_statusLabel = nullptr;

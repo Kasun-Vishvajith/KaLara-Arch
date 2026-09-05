@@ -6,6 +6,7 @@
 #include "kalara/architecture/room.hpp"
 #include "kalara/architecture/opening.hpp"
 #include "kalara/architecture/annotation.hpp"
+#include "kalara/architecture/library_item.hpp"
 #include "kalara/architecture/room_boundary_detector.hpp"
 #include <string>
 #include <vector>
@@ -158,6 +159,34 @@ public:
         return m_notes;
     }
 
+    // --- Library Instances Management (Step 11) ---
+    LibraryInstance& addLibraryInstance(const LibraryItem& item, kalara::core::geometry::Point2D pos,
+                                        kalara::core::geometry::Angle rot = kalara::core::geometry::Angle{}) {
+        m_libraryInstances.emplace_back(std::make_unique<LibraryInstance>(item, pos, rot));
+        return *m_libraryInstances.back();
+    }
+
+    [[nodiscard]] const std::vector<std::unique_ptr<LibraryInstance>>& libraryInstances() const noexcept {
+        return m_libraryInstances;
+    }
+
+    [[nodiscard]] LibraryInstance* findLibraryInstance(const EntityId& instId) const noexcept {
+        for (const auto& inst : m_libraryInstances) {
+            if (inst->id == instId) return inst.get();
+        }
+        return nullptr;
+    }
+
+    bool removeLibraryInstance(const EntityId& instId) {
+        for (auto it = m_libraryInstances.begin(); it != m_libraryInstances.end(); ++it) {
+            if ((*it)->id == instId) {
+                m_libraryInstances.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
 private:
     std::vector<std::unique_ptr<Wall>> m_walls;
     std::vector<std::unique_ptr<Room>> m_rooms;
@@ -165,6 +194,7 @@ private:
     std::vector<std::unique_ptr<Window>> m_windows;
     std::vector<std::unique_ptr<Dimension>> m_dimensions;
     std::vector<std::unique_ptr<NoteAnnotation>> m_notes;
+    std::vector<std::unique_ptr<LibraryInstance>> m_libraryInstances;
 };
 
 } // namespace kalara::architecture

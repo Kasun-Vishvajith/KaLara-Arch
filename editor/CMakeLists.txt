@@ -2,8 +2,10 @@ add_library(kalara_editor
     include/kalara/editor/viewport_state.hpp
     include/kalara/editor/grid_settings.hpp
     include/kalara/editor/viewport_widget.hpp
+    include/kalara/editor/library_browser_widget.hpp
     include/kalara/editor/main_window.hpp
     src/viewport_widget.cpp
+    src/library_browser_widget.cpp
     src/main_window.cpp
 )
 

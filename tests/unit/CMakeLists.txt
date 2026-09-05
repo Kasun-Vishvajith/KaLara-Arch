@@ -121,3 +121,17 @@ target_link_libraries(test_manipulation PRIVATE
 
 target_compile_features(test_manipulation PRIVATE cxx_std_20)
 add_test(NAME manipulation_test COMMAND test_manipulation)
+
+add_executable(test_library
+    test_library.cpp
+)
+
+target_link_libraries(test_library PRIVATE
+    kalara_runtime
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_library PRIVATE cxx_std_20)
+add_test(NAME library_test COMMAND test_library)
+

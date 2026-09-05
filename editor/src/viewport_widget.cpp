@@ -284,6 +284,61 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
                     painter.setFont(font);
                     painter.drawText(QPointF(pScreen.x, pScreen.y), QString::fromStdString(note->text));
                 }
+
+                // 8. Draw Library Instances (Step 11)
+                for (const auto& inst : lvl->libraryInstances()) {
+                    bool isSelected = m_selection.isSelected(inst->id);
+                    auto worldPoly = inst->worldBoundary();
+                    QPolygonF poly;
+                    for (const auto& pt : worldPoly) {
+                        auto s = m_state.worldToScreen(pt);
+                        poly.append(QPointF(s.x, s.y));
+                    }
+
+                    // Clearance zone outline if selected or has clearance
+                    if (inst->clearance.hasClearance()) {
+                        auto clearPoly = inst->worldClearanceZone();
+                        QPolygonF cPoly;
+                        for (const auto& pt : clearPoly) {
+                            auto s = m_state.worldToScreen(pt);
+                            cPoly.append(QPointF(s.x, s.y));
+                        }
+                        painter.setPen(QPen(QColor(255, 180, 50, 100), 1, Qt::DashLine));
+                        painter.setBrush(QColor(255, 180, 50, 15));
+                        painter.drawPolygon(cPoly);
+                    }
+
+                    if (isSelected) {
+                        painter.setPen(QPen(QColor(80, 220, 240), 2));
+                        painter.setBrush(QColor(80, 220, 240, 70));
+                    } else {
+                        // Category based color
+                        QColor strokeColor(180, 185, 200);
+                        QColor fillColor(60, 64, 75, 180);
+                        if (inst->semanticType == kalara::architecture::SemanticType::Fixture) {
+                            strokeColor = QColor(100, 200, 240); // Fixture teal
+                            fillColor = QColor(40, 70, 90, 180);
+                        } else if (inst->semanticType == kalara::architecture::SemanticType::Stair) {
+                            strokeColor = QColor(220, 160, 80); // Stair amber
+                            fillColor = QColor(80, 60, 40, 180);
+                        } else if (inst->semanticType == kalara::architecture::SemanticType::SiteElement) {
+                            strokeColor = QColor(120, 200, 100); // Site green
+                            fillColor = QColor(50, 80, 50, 180);
+                        }
+                        painter.setPen(QPen(strokeColor, 1.5));
+                        painter.setBrush(fillColor);
+                    }
+                    painter.drawPolygon(poly);
+
+                    // Name label inside or beside object
+                    auto centerScreen = m_state.worldToScreen(inst->position);
+                    painter.setPen(QColor(220, 225, 235));
+                    QFont font = painter.font();
+                    font.setPointSize(8);
+                    painter.setFont(font);
+                    QRectF textRect(centerScreen.x - 60.0, centerScreen.y - 12.0, 120.0, 24.0);
+                    painter.drawText(textRect, Qt::AlignCenter, QString::fromStdString(inst->name));
+                }
             }
         }
     }
@@ -455,7 +510,16 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
                     }
                 }
             }
-            // 3. Check walls
+            // 3. Check library instances (furniture, fixtures, etc.)
+            if (!hitId) {
+                for (const auto& inst : lvl->libraryInstances()) {
+                    if (inst->containsPoint(rawWorld)) {
+                        hitId = inst->id;
+                        break;
+                    }
+                }
+            }
+            // 4. Check walls
             if (!hitId) {
                 for (const auto& wall : lvl->walls()) {
                     if (wall->containsPoint(rawWorld)) {
@@ -464,7 +528,7 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
                     }
                 }
             }
-            // 4. Check rooms
+            // 5. Check rooms
             if (!hitId) {
                 for (const auto& room : lvl->rooms()) {
                     if (room->containsPoint(rawWorld)) {

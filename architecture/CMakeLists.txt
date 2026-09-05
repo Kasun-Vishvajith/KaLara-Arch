@@ -11,6 +11,8 @@ add_library(kalara_architecture
     include/kalara/architecture/annotation.hpp
     include/kalara/architecture/constraint.hpp
     include/kalara/architecture/constraint_solver.hpp
+    include/kalara/architecture/library_item.hpp
+    include/kalara/architecture/library_catalog.hpp
     include/kalara/architecture/level.hpp
     include/kalara/architecture/building.hpp
     include/kalara/architecture/site.hpp
@@ -24,6 +26,7 @@ add_library(kalara_architecture
     src/room_boundary_detector.cpp
     src/annotation.cpp
     src/constraint_solver.cpp
+    src/library_catalog.cpp
 )
 
 target_include_directories(kalara_architecture PUBLIC

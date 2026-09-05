@@ -90,7 +90,15 @@ size_t ModelManipulator::moveEntities(
         }
     }
 
-    // 5. Always synchronize associative dimensions (Rule 7)
+    // 5. Move Library Instances (Step 11)
+    for (const auto& id : targetSet) {
+        if (auto* inst = level.findLibraryInstance(id)) {
+            inst->position = inst->position + delta_mm;
+            ++movedCount;
+        }
+    }
+
+    // 6. Always synchronize associative dimensions (Rule 7)
     level.syncDimensions();
 
     return movedCount;
@@ -153,6 +161,15 @@ size_t ModelManipulator::rotateEntities(
         }
     }
 
+    // Rotate library instances (position & orientation)
+    for (const auto& id : targetSet) {
+        if (auto* inst = level.findLibraryInstance(id)) {
+            inst->position = rot.map(inst->position);
+            inst->rotation = inst->rotation + angle;
+            ++rotatedCount;
+        }
+    }
+
     // Synchronize associative dimensions
     level.syncDimensions();
 
@@ -187,6 +204,12 @@ size_t ModelManipulator::alignEntities(
                 minY = std::min(minY, p.y);
                 maxY = std::max(maxY, p.y);
             }
+        } else if (auto* inst = level.findLibraryInstance(id)) {
+            auto bb = inst->boundingBox();
+            minX = std::min(minX, bb.min.x);
+            maxX = std::max(maxX, bb.max.x);
+            minY = std::min(minY, bb.min.y);
+            maxY = std::max(maxY, bb.max.y);
         }
     }
 
@@ -254,6 +277,21 @@ size_t ModelManipulator::alignEntities(
                 for (auto& p : r->boundary) {
                     p = p + delta;
                 }
+                ++alignedCount;
+            }
+        } else if (auto* inst = level.findLibraryInstance(id)) {
+            auto bb = inst->boundingBox();
+            switch (alignment) {
+                case AlignmentType::AlignLeft:    delta.dx = targetRef - bb.min.x; break;
+                case AlignmentType::AlignRight:   delta.dx = targetRef - bb.max.x; break;
+                case AlignmentType::AlignTop:     delta.dy = targetRef - bb.max.y; break;
+                case AlignmentType::AlignBottom:  delta.dy = targetRef - bb.min.y; break;
+                case AlignmentType::AlignCenterX: delta.dx = targetRef - bb.center().x; break;
+                case AlignmentType::AlignCenterY: delta.dy = targetRef - bb.center().y; break;
+            }
+
+            if (delta.lengthSquared() > 0.0) {
+                inst->position = inst->position + delta;
                 ++alignedCount;
             }
         }

@@ -1,9 +1,11 @@
 #include "kalara/editor/main_window.hpp"
+#include "kalara/editor/library_browser_widget.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
 #include <QToolBar>
 #include <QAction>
+#include <QDockWidget>
 #include <iomanip>
 #include <sstream>
 
@@ -57,6 +59,17 @@ MainWindow::MainWindow(QWidget *parent)
             // Add note annotation
             ground.addNote({-2300.0, 1600.0}, "Living Room Area: 18.2 m² [Finish: Parquet]");
         }
+
+        // Add demo library instances (Step 11)
+        kalara::architecture::LibraryCatalog tempCatalog;
+        const auto* sofaItem = tempCatalog.findItem("SOFA_3SEAT");
+        if (sofaItem) {
+            ground.addLibraryInstance(*sofaItem, {0.0, -1200.0});
+        }
+        const auto* tableItem = tempCatalog.findItem("TABLE_DINING_6");
+        if (tableItem) {
+            ground.addLibraryInstance(*tableItem, {0.0, 800.0});
+        }
     }
 
     setupUI();
@@ -67,6 +80,16 @@ void MainWindow::setupUI() {
     m_viewport = new ViewportWidget(this);
     m_viewport->setProject(m_project.get());
     setCentralWidget(m_viewport);
+
+    // Dockable 2D Architectural Library Browser Panel
+    auto *dock = new QDockWidget("Architectural Library", this);
+    dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_libraryBrowser = new LibraryBrowserWidget(dock);
+    dock->setWidget(m_libraryBrowser);
+    addDockWidget(Qt::LeftDockWidgetArea, dock);
+
+    connect(m_libraryBrowser, &LibraryBrowserWidget::placeItemRequested,
+            this, &MainWindow::onPlaceLibraryItem);
 
     // Status bar with live coordinate tracking (mm) and zoom level
     auto *status = statusBar();
@@ -114,16 +137,39 @@ void MainWindow::onSelectionChanged() {
 
         if (lvl) {
             auto summary = sel.summarize(*lvl);
-            QString info = QString("Selected: %1 entities (Walls: %2, Rooms: %3, Openings: %4)")
+            QString info = QString("Selected: %1 entities (Walls: %2, Rooms: %3, Openings: %4, Library: %5)")
                 .arg(summary.totalCount)
                 .arg(summary.wallCount)
                 .arg(summary.roomCount)
-                .arg(summary.doorCount + summary.windowCount);
+                .arg(summary.doorCount + summary.windowCount)
+                .arg(summary.libraryInstanceCount);
             m_statusLabel->setText(info + " [Drag: Move, Arrow keys: Nudge, R: Rotate 90°]");
         } else {
             m_statusLabel->setText(QString("Selected: %1 entities").arg(sel.count()));
         }
     }
+}
+
+void MainWindow::onPlaceLibraryItem(const std::string& itemId) {
+    if (!m_project || !m_libraryBrowser) return;
+    const auto* item = m_libraryBrowser->catalog().findItem(itemId);
+    if (!item) return;
+
+    auto* site = m_project->defaultSite();
+    if (!site || site->buildings().empty()) return;
+    auto* bld = site->buildings().front().get();
+    if (!bld || bld->levels().empty()) return;
+    auto* lvl = bld->levels().front().get();
+
+    // Place at current cursor position in world coordinates (or viewport center)
+    auto placePos = m_viewport->cursorWorld_mm();
+    auto& inst = lvl->addLibraryInstance(*item, placePos);
+
+    // Select placed instance immediately
+    m_viewport->selectionManager().clear();
+    m_viewport->selectionManager().select(inst.id);
+    m_viewport->update();
+    onSelectionChanged();
 }
 
 } // namespace kalara::editor

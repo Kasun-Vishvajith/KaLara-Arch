@@ -21,7 +21,8 @@ enum class SemanticType {
     Furniture,
     Fixture,
     Annotation,
-    Dimension
+    Dimension,
+    SiteElement
 };
 
 constexpr std::string_view semanticTypeName(SemanticType type) noexcept {
@@ -43,6 +44,7 @@ constexpr std::string_view semanticTypeName(SemanticType type) noexcept {
         case SemanticType::Fixture:           return "Fixture";
         case SemanticType::Annotation:        return "Annotation";
         case SemanticType::Dimension:         return "Dimension";
+        case SemanticType::SiteElement:       return "SiteElement";
     }
     return "Unknown";
 }

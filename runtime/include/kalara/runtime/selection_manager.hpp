@@ -18,6 +18,7 @@ struct SelectionSummary {
     size_t windowCount = 0;
     size_t dimensionCount = 0;
     size_t noteCount = 0;
+    size_t libraryInstanceCount = 0;
     bool hasSite = false;
     std::optional<kalara::core::geometry::Rect2D> boundingBox;
 };
@@ -152,6 +153,15 @@ public:
             }
         }
 
+        // Check library instances (Step 11)
+        for (const auto& inst : level.libraryInstances()) {
+            if (rect.contains(inst->position) || rect.intersects(inst->boundingBox())) {
+                if (m_selected.insert(inst->id).second) {
+                    ++added;
+                }
+            }
+        }
+
         return added;
     }
 
@@ -170,6 +180,9 @@ public:
             } else if (auto* r = level.findRoom(id)) {
                 ++summary.roomCount;
                 for (const auto& p : r->boundary) pts.push_back(p);
+            } else if (auto* inst = level.findLibraryInstance(id)) {
+                ++summary.libraryInstanceCount;
+                for (const auto& p : inst->worldBoundary()) pts.push_back(p);
             } else {
                 for (const auto& d : level.doors()) {
                     if (d->id == id) {
