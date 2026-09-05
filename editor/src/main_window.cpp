@@ -28,10 +28,18 @@ MainWindow::MainWindow(QWidget *parent)
             kalara::core::geometry::Point2D(10000.0, 15000.0),
             kalara::core::geometry::Point2D(-10000.0, 15000.0)
         };
+
+        // Add demo residential building and connected ground floor walls (5m x 4m room)
+        auto& building = site->addBuilding("Villa");
+        auto& ground = building.addLevel("Ground Floor", 0.0, 3000.0);
+        ground.addWall({-2500.0, -2000.0}, {2500.0, -2000.0}, 200.0); // South wall (5000 mm)
+        ground.addWall({2500.0, -2000.0}, {2500.0, 2000.0}, 200.0);   // East wall (4000 mm)
+        ground.addWall({2500.0, 2000.0}, {-2500.0, 2000.0}, 200.0);   // North wall (5000 mm)
+        ground.addWall({-2500.0, 2000.0}, {-2500.0, -2000.0}, 200.0); // West wall (4000 mm)
     }
 
     setupUI();
-    kalara::core::Logger::info("MainWindow with 2D Viewport initialized.");
+    kalara::core::Logger::info("MainWindow with 2D Viewport & Walls initialized.");
 }
 
 void MainWindow::setupUI() {

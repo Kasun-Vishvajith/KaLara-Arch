@@ -93,6 +93,7 @@ void ViewportWidget::drawOrigin(QPainter& painter) {
 void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
     if (!m_project) return;
 
+    // 1. Draw Site Boundaries
     for (const auto& site : m_project->sites()) {
         if (site->propertyBoundary.size() >= 3) {
             QPolygonF poly;
@@ -105,6 +106,39 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
             painter.setBrush(QColor(230, 190, 80, 20));
             painter.drawPolygon(poly);
         }
+
+        // 2. Draw Walls across buildings and levels
+        for (const auto& bld : site->buildings()) {
+            for (const auto& lvl : bld->levels()) {
+                for (const auto& wall : lvl->walls()) {
+                    bool isSelected = m_selection.isSelected(wall->id);
+                    auto corners = wall->boundaryPolygon();
+
+                    QPolygonF wallPoly;
+                    for (const auto& c : corners) {
+                        auto s = m_state.worldToScreen(c);
+                        wallPoly.append(QPointF(s.x, s.y));
+                    }
+
+                    if (isSelected) {
+                        // Highlighted selected wall in cyan/teal
+                        painter.setPen(QPen(QColor(80, 220, 240), 2));
+                        painter.setBrush(QColor(80, 220, 240, 80));
+                    } else {
+                        // Standard architectural wall: solid dark gray body with crisp edges
+                        painter.setPen(QPen(QColor(200, 205, 215), 1.5));
+                        painter.setBrush(QColor(110, 115, 125));
+                    }
+                    painter.drawPolygon(wallPoly);
+
+                    // Draw wall centerline as subtle reference
+                    auto startScreen = m_state.worldToScreen(wall->start);
+                    auto endScreen = m_state.worldToScreen(wall->end);
+                    painter.setPen(QPen(QColor(160, 165, 175, 100), 1, Qt::DashDotLine));
+                    painter.drawLine(QPointF(startScreen.x, startScreen.y), QPointF(endScreen.x, endScreen.y));
+                }
+            }
+        }
     }
 }
 
@@ -115,10 +149,30 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
         m_lastMousePos = event->pos();
         event->accept();
     } else if (event->button() == Qt::LeftButton) {
-        // Basic selection ray / test point
+        // Selection hit-test: prioritize walls over sites
         auto worldPos = m_state.screenToWorld(event->position().x(), event->position().y());
+        bool foundWall = false;
+
+        if (!(event->modifiers() & Qt::ShiftModifier)) {
+            m_selection.clear();
+        }
+
         if (m_project) {
             for (const auto& site : m_project->sites()) {
+                for (const auto& bld : site->buildings()) {
+                    for (const auto& lvl : bld->levels()) {
+                        for (const auto& wall : lvl->walls()) {
+                            if (wall->containsPoint(worldPos)) {
+                                m_selection.select(wall->id);
+                                foundWall = true;
+                                break;
+                            }
+                        }
+                        if (foundWall) break;
+                    }
+                    if (foundWall) break;
+                }
+                if (foundWall) break;
                 if (kalara::core::geometry::GeometricOps::pointInPolygon(worldPos, site->propertyBoundary)) {
                     m_selection.select(site->id);
                 }

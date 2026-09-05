@@ -3,12 +3,16 @@ add_library(kalara_architecture
     include/kalara/architecture/entity_id.hpp
     include/kalara/architecture/metadata.hpp
     include/kalara/architecture/semantics.hpp
+    include/kalara/architecture/wall.hpp
+    include/kalara/architecture/wall_join.hpp
     include/kalara/architecture/level.hpp
     include/kalara/architecture/building.hpp
     include/kalara/architecture/site.hpp
     include/kalara/architecture/project.hpp
     src/model_info.cpp
     src/entity_id.cpp
+    src/wall.cpp
+    src/wall_join.cpp
 )
 
 target_include_directories(kalara_architecture PUBLIC

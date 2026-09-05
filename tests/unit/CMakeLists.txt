@@ -48,3 +48,15 @@ target_link_libraries(test_viewport PRIVATE
 
 target_compile_features(test_viewport PRIVATE cxx_std_20)
 add_test(NAME viewport_test COMMAND test_viewport)
+
+add_executable(test_wall
+    test_wall.cpp
+)
+
+target_link_libraries(test_wall PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_wall PRIVATE cxx_std_20)
+add_test(NAME wall_test COMMAND test_wall)
