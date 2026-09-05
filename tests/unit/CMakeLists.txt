@@ -198,4 +198,17 @@ target_link_libraries(test_history PRIVATE
 target_compile_features(test_history PRIVATE cxx_std_20)
 add_test(NAME history_test COMMAND test_history)
 
+add_executable(test_dxf_export
+    test_dxf_export.cpp
+)
+
+target_link_libraries(test_dxf_export PRIVATE
+    kalara_exporters
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_dxf_export PRIVATE cxx_std_20)
+add_test(NAME dxf_export_test COMMAND test_dxf_export)
+
 

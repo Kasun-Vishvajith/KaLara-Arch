@@ -4,6 +4,7 @@
 #include "kalara/editor/site_plan_widget.hpp"
 #include "kalara/editor/validation_widget.hpp"
 #include "kalara/architecture/project_serializer.hpp"
+#include "kalara/exporters/dxf_exporter.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
@@ -97,6 +98,8 @@ void MainWindow::setupUI() {
     fileMenu->addSeparator();
     fileMenu->addAction("&Save Project", this, &MainWindow::saveProject, QKeySequence::Save);
     fileMenu->addAction("Save Project &As...", this, &MainWindow::saveProjectAs, QKeySequence::SaveAs);
+    fileMenu->addSeparator();
+    fileMenu->addAction("Export &DXF...", this, &MainWindow::exportDxf, QKeySequence("Ctrl+E"));
     fileMenu->addSeparator();
     fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
 
@@ -403,6 +406,47 @@ bool MainWindow::saveProjectAs() {
 
     m_currentFilePath = fileName;
     return saveProject();
+}
+
+void MainWindow::exportDxf() {
+    if (!m_project) return;
+
+    QString defaultName = "drawing.dxf";
+    if (!m_currentFilePath.isEmpty()) {
+        QFileInfo fi(m_currentFilePath);
+        defaultName = fi.completeBaseName() + ".dxf";
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Export CAD Drawing (DXF)",
+        defaultName,
+        "AutoCAD DXF Files (*.dxf);;All Files (*.*)"
+    );
+
+    if (fileName.isEmpty()) return;
+    if (!fileName.endsWith(".dxf", Qt::CaseInsensitive)) {
+        fileName += ".dxf";
+    }
+
+    kalara::exporters::DxfExportOptions options;
+    options.exportWallOutlines = true;
+    options.exportWallCenterlines = true;
+    options.exportDoorsAndWindows = true;
+    options.exportRooms = true;
+    options.exportDimensions = true;
+    options.exportAnnotations = true;
+    options.exportFurniture = true;
+    options.exportRoofs = true;
+    options.exportSite = true;
+
+    bool success = kalara::exporters::DxfExporter::exportProjectToFile(*m_project, fileName.toStdString(), options);
+    if (!success) {
+        QMessageBox::critical(this, "Export Error", "Failed to export DXF file to " + fileName);
+        return;
+    }
+
+    statusBar()->showMessage("Successfully exported DXF to " + QFileInfo(fileName).fileName(), 3000);
 }
 
 } // namespace kalara::editor

@@ -22,6 +22,7 @@ target_include_directories(kalara_editor PUBLIC
 
 target_link_libraries(kalara_editor PUBLIC
     kalara_runtime
+    kalara_exporters
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets

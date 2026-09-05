@@ -1,6 +1,10 @@
 add_library(kalara_exporters
     include/kalara/exporters/export_format.hpp
+    include/kalara/exporters/dxf_writer.hpp
+    include/kalara/exporters/dxf_exporter.hpp
     src/export_format.cpp
+    src/dxf_writer.cpp
+    src/dxf_exporter.cpp
 )
 
 target_include_directories(kalara_exporters PUBLIC

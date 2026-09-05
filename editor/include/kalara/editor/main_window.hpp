@@ -26,6 +26,7 @@ public slots:
     void openProject();
     bool saveProject();
     bool saveProjectAs();
+    void exportDxf();
     void undo();
     void redo();
 
