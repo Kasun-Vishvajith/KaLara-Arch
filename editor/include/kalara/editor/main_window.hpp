@@ -31,6 +31,7 @@ private:
     class LibraryBrowserWidget *m_libraryBrowser = nullptr;
     class LevelManagerWidget *m_levelManager = nullptr;
     class SitePlanWidget *m_sitePlan = nullptr;
+    class ValidationWidget *m_validation = nullptr;
     QLabel *m_coordLabel = nullptr;
     QLabel *m_zoomLabel = nullptr;
     QLabel *m_statusLabel = nullptr;

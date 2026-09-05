@@ -160,3 +160,16 @@ target_link_libraries(test_site PRIVATE
 target_compile_features(test_site PRIVATE cxx_std_20)
 add_test(NAME site_test COMMAND test_site)
 
+add_executable(test_validation
+    test_validation.cpp
+)
+
+target_link_libraries(test_validation PRIVATE
+    kalara_runtime
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_validation PRIVATE cxx_std_20)
+add_test(NAME validation_test COMMAND test_validation)
+

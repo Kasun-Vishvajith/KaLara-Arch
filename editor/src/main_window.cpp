@@ -2,6 +2,7 @@
 #include "kalara/editor/library_browser_widget.hpp"
 #include "kalara/editor/level_manager_widget.hpp"
 #include "kalara/editor/site_plan_widget.hpp"
+#include "kalara/editor/validation_widget.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
@@ -119,6 +120,22 @@ void MainWindow::setupUI() {
 
     connect(m_sitePlan, &SitePlanWidget::siteModified, this, [this]() {
         m_viewport->update();
+    });
+
+    // Dockable Diagnostics & Validation Panel (Step 14 & Rule 16)
+    auto *validationDock = new QDockWidget("Diagnostics & Validation", this);
+    validationDock->setAllowedAreas(Qt::BottomDockWidgetArea | Qt::RightDockWidgetArea);
+    m_validation = new ValidationWidget(m_project.get(), validationDock);
+    validationDock->setWidget(m_validation);
+    addDockWidget(Qt::BottomDockWidgetArea, validationDock);
+
+    connect(m_validation, &ValidationWidget::issueSelected, this, [this](const auto& entityIds, const auto&) {
+        m_viewport->selectionManager().clear();
+        for (const auto& id : entityIds) {
+            m_viewport->selectionManager().select(id);
+        }
+        m_viewport->update();
+        onSelectionChanged();
     });
 
     // Status bar with live coordinate tracking (mm) and zoom level

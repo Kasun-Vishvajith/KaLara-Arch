@@ -5,11 +5,13 @@ add_library(kalara_editor
     include/kalara/editor/library_browser_widget.hpp
     include/kalara/editor/level_manager_widget.hpp
     include/kalara/editor/site_plan_widget.hpp
+    include/kalara/editor/validation_widget.hpp
     include/kalara/editor/main_window.hpp
     src/viewport_widget.cpp
     src/library_browser_widget.cpp
     src/level_manager_widget.cpp
     src/site_plan_widget.cpp
+    src/validation_widget.cpp
     src/main_window.cpp
 )
 
