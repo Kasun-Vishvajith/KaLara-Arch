@@ -1,9 +1,11 @@
 #pragma once
 #include "kalara/editor/viewport_widget.hpp"
 #include "kalara/architecture/project.hpp"
+#include "kalara/runtime/transaction.hpp"
 #include <QMainWindow>
 #include <QLabel>
 #include <QStatusBar>
+#include <QAction>
 #include <memory>
 
 namespace kalara::editor {
@@ -17,12 +19,15 @@ public:
 
     [[nodiscard]] ViewportWidget* viewportWidget() const noexcept { return m_viewport; }
     [[nodiscard]] kalara::architecture::Project* project() const noexcept { return m_project.get(); }
+    [[nodiscard]] kalara::runtime::TransactionManager& transactionManager() noexcept { return m_transactionManager; }
 
 public slots:
     void newProject();
     void openProject();
     bool saveProject();
     bool saveProjectAs();
+    void undo();
+    void redo();
 
 private slots:
     void onCursorCoordinatesChanged(double x_mm, double y_mm);
@@ -32,6 +37,7 @@ private slots:
 
 private:
     void setupUI();
+    void updateUndoRedoActions();
 
     ViewportWidget *m_viewport = nullptr;
     class LibraryBrowserWidget *m_libraryBrowser = nullptr;
@@ -42,10 +48,14 @@ private:
     QLabel *m_zoomLabel = nullptr;
     QLabel *m_statusLabel = nullptr;
 
+    QAction *m_undoAction = nullptr;
+    QAction *m_redoAction = nullptr;
+
     QString m_currentFilePath;
     void updateWindowTitle();
 
     std::unique_ptr<kalara::architecture::Project> m_project;
+    kalara::runtime::TransactionManager m_transactionManager;
 };
 
 } // namespace kalara::editor

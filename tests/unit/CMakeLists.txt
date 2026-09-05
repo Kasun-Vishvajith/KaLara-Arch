@@ -185,4 +185,17 @@ target_link_libraries(test_serialization PRIVATE
 target_compile_features(test_serialization PRIVATE cxx_std_20)
 add_test(NAME serialization_test COMMAND test_serialization)
 
+add_executable(test_history
+    test_history.cpp
+)
+
+target_link_libraries(test_history PRIVATE
+    kalara_runtime
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_history PRIVATE cxx_std_20)
+add_test(NAME history_test COMMAND test_history)
+
 

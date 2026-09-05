@@ -50,6 +50,22 @@ public:
         return m_sites.empty() ? nullptr : m_sites.front().get();
     }
 
+    void clearSites() noexcept {
+        m_sites.clear();
+    }
+
+    void addExistingSite(std::unique_ptr<Site> site) {
+        if (site) m_sites.push_back(std::move(site));
+    }
+
+    void setSites(std::vector<std::unique_ptr<Site>> newSites) {
+        m_sites = std::move(newSites);
+    }
+
+    std::vector<std::unique_ptr<Site>> releaseSites() noexcept {
+        return std::move(m_sites);
+    }
+
 private:
     std::vector<std::unique_ptr<Site>> m_sites;
 };

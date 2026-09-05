@@ -100,6 +100,12 @@ void MainWindow::setupUI() {
     fileMenu->addSeparator();
     fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
 
+    // Edit Menu & History / Undo-Redo Actions (Step 16)
+    auto *editMenu = menu->addMenu("&Edit");
+    m_undoAction = editMenu->addAction("&Undo", this, &MainWindow::undo, QKeySequence::Undo);
+    m_redoAction = editMenu->addAction("&Redo", this, &MainWindow::redo, QKeySequence::Redo);
+    m_redoAction->setShortcuts({QKeySequence::Redo, QKeySequence("Ctrl+Shift+Z")});
+
     m_viewport = new ViewportWidget(this);
     m_viewport->setProject(m_project.get());
     setCentralWidget(m_viewport);
@@ -178,6 +184,8 @@ void MainWindow::setupUI() {
             this, &MainWindow::onZoomChanged);
     connect(m_viewport, &ViewportWidget::selectionChanged,
             this, &MainWindow::onSelectionChanged);
+
+    updateUndoRedoActions();
 }
 
 void MainWindow::onCursorCoordinatesChanged(double x_mm, double y_mm) {
@@ -232,7 +240,12 @@ void MainWindow::onPlaceLibraryItem(const std::string& itemId) {
 
     // Place at current cursor position in world coordinates (or viewport center)
     auto placePos = m_viewport->cursorWorld_mm();
+
+    m_transactionManager.beginTransaction(*m_project, "Place " + item->name, kalara::runtime::TransactionActor::Human);
     auto& inst = lvl->addLibraryInstance(*item, placePos);
+    m_transactionManager.recordOperation("Place " + item->id);
+    m_transactionManager.commitTransaction(*m_project);
+    updateUndoRedoActions();
 
     // Select placed instance immediately
     m_viewport->selectionManager().clear();
@@ -252,10 +265,64 @@ void MainWindow::updateWindowTitle() {
     }
 }
 
+void MainWindow::updateUndoRedoActions() {
+    if (!m_undoAction || !m_redoAction) return;
+
+    m_undoAction->setEnabled(m_transactionManager.canUndo());
+    m_redoAction->setEnabled(m_transactionManager.canRedo());
+
+    if (m_transactionManager.canUndo()) {
+        m_undoAction->setText(QString("&Undo %1").arg(QString::fromStdString(m_transactionManager.nextUndoIntent())));
+    } else {
+        m_undoAction->setText("&Undo");
+    }
+
+    if (m_transactionManager.canRedo()) {
+        m_redoAction->setText(QString("&Redo %1").arg(QString::fromStdString(m_transactionManager.nextRedoIntent())));
+    } else {
+        m_redoAction->setText("&Redo");
+    }
+}
+
+void MainWindow::undo() {
+    if (!m_project || !m_transactionManager.canUndo()) return;
+
+    std::string intent = m_transactionManager.nextUndoIntent();
+    if (m_transactionManager.undo(*m_project)) {
+        m_viewport->selectionManager().clear();
+        m_viewport->update();
+        if (m_levelManager) m_levelManager->refreshLevels();
+        if (m_sitePlan) m_sitePlan->refreshSiteData();
+        if (m_validation) m_validation->runValidation();
+        updateUndoRedoActions();
+        onSelectionChanged();
+        statusBar()->showMessage(QString("Undid: %1").arg(QString::fromStdString(intent)), 3000);
+    }
+}
+
+void MainWindow::redo() {
+    if (!m_project || !m_transactionManager.canRedo()) return;
+
+    std::string intent = m_transactionManager.nextRedoIntent();
+    if (m_transactionManager.redo(*m_project)) {
+        m_viewport->selectionManager().clear();
+        m_viewport->update();
+        if (m_levelManager) m_levelManager->refreshLevels();
+        if (m_sitePlan) m_sitePlan->refreshSiteData();
+        if (m_validation) m_validation->runValidation();
+        updateUndoRedoActions();
+        onSelectionChanged();
+        statusBar()->showMessage(QString("Redid: %1").arg(QString::fromStdString(intent)), 3000);
+    }
+}
+
 void MainWindow::newProject() {
     m_project = std::make_unique<kalara::architecture::Project>("Untitled Project");
     m_currentFilePath.clear();
     updateWindowTitle();
+
+    m_transactionManager.clear();
+    updateUndoRedoActions();
 
     m_viewport->setProject(m_project.get());
     m_viewport->selectionManager().clear();
@@ -290,6 +357,9 @@ void MainWindow::openProject() {
     m_project = std::move(loaded);
     m_currentFilePath = fileName;
     updateWindowTitle();
+
+    m_transactionManager.clear();
+    updateUndoRedoActions();
 
     m_viewport->setProject(m_project.get());
     m_viewport->selectionManager().clear();

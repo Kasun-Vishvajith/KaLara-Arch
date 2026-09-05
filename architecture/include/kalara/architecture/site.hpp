@@ -101,6 +101,10 @@ public:
         return nullptr;
     }
 
+    [[nodiscard]] Building* defaultBuilding() const noexcept {
+        return m_buildings.empty() ? nullptr : m_buildings.front().get();
+    }
+
     bool removeBuilding(const EntityId& buildingId) {
         for (auto it = m_buildings.begin(); it != m_buildings.end(); ++it) {
             if ((*it)->id == buildingId) {

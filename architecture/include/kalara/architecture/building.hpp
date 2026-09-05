@@ -63,6 +63,10 @@ public:
         return m_levels.empty() ? nullptr : m_levels.front().get();
     }
 
+    [[nodiscard]] Level* defaultLevel() const noexcept {
+        return activeLevel();
+    }
+
     void setActiveLevel(const EntityId& levelId) noexcept {
         if (findLevel(levelId)) {
             m_activeLevelId = levelId;
