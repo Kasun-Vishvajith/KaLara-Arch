@@ -33,6 +33,8 @@ void ViewportWidget::paintGL() {
     drawGrid(painter);
     drawOrigin(painter);
     drawSiteAndBuildings(painter);
+    drawMarquee(painter);
+    drawSnapIndicator(painter);
 }
 
 void ViewportWidget::drawGrid(QPainter& painter) {
@@ -325,75 +327,181 @@ void ViewportWidget::drawNorthArrow(QPainter& painter) {
     painter.restore();
 }
 
+kalara::architecture::Level* ViewportWidget::activeLevel() const {
+    if (!m_project) return nullptr;
+    auto* site = m_project->defaultSite();
+    if (!site || site->buildings().empty()) return nullptr;
+    auto* bld = site->buildings().front().get();
+    if (!bld || bld->levels().empty()) return nullptr;
+    return bld->levels().front().get();
+}
+
+void ViewportWidget::drawMarquee(QPainter& painter) {
+    if (m_mode != ViewportInteractionMode::RubberbandSelect) return;
+
+    auto p1 = m_state.worldToScreen(m_pressWorldPos);
+    auto p2 = m_state.worldToScreen(m_dragCurrentWorldPos);
+
+    double rx = std::min(p1.x, p2.x);
+    double ry = std::min(p1.y, p2.y);
+    double rw = std::abs(p2.x - p1.x);
+    double rh = std::abs(p2.y - p1.y);
+
+    QRectF rect(rx, ry, rw, rh);
+    painter.setPen(QPen(QColor(80, 180, 255, 220), 1.5, Qt::DashLine));
+    painter.setBrush(QColor(80, 180, 255, 35));
+    painter.drawRect(rect);
+}
+
+void ViewportWidget::drawSnapIndicator(QPainter& painter) {
+    if (!m_currentSnap.snapped) return;
+
+    auto s = m_state.worldToScreen(m_currentSnap.point);
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    if (m_currentSnap.type == kalara::runtime::SnapType::Endpoint) {
+        // Yellow square for endpoint snap
+        painter.setPen(QPen(QColor(255, 215, 0), 2));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRect(QRectF(s.x - 5.0, s.y - 5.0, 10.0, 10.0));
+    } else if (m_currentSnap.type == kalara::runtime::SnapType::Midpoint) {
+        // Cyan triangle for midpoint snap
+        painter.setPen(QPen(QColor(0, 230, 255), 2));
+        painter.setBrush(Qt::NoBrush);
+        QPolygonF tri;
+        tri << QPointF(s.x, s.y - 6.0) << QPointF(s.x + 6.0, s.y + 5.0) << QPointF(s.x - 6.0, s.y + 5.0);
+        painter.drawPolygon(tri);
+    } else if (m_currentSnap.type == kalara::runtime::SnapType::WallCenterline) {
+        // Hourglass / cross for centerline snap
+        painter.setPen(QPen(QColor(180, 255, 120), 2));
+        painter.drawLine(QPointF(s.x - 4.0, s.y - 4.0), QPointF(s.x + 4.0, s.y + 4.0));
+        painter.drawLine(QPointF(s.x - 4.0, s.y + 4.0), QPointF(s.x + 4.0, s.y - 4.0));
+    } else if (m_currentSnap.type == kalara::runtime::SnapType::Grid) {
+        // Subtle white circle for grid snap
+        painter.setPen(QPen(QColor(200, 200, 200, 180), 1));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(QPointF(s.x, s.y), 4.0, 4.0);
+    }
+
+    painter.restore();
+}
+
+void ViewportWidget::moveSelection(const kalara::core::geometry::Vector2D& delta_mm, bool propagateConnected) {
+    auto* lvl = activeLevel();
+    if (!lvl || m_selection.empty()) return;
+
+    kalara::runtime::ModelManipulator::moveEntities(*lvl, m_selection.selectedList(), delta_mm, propagateConnected);
+    update();
+}
+
+void ViewportWidget::rotateSelection(kalara::core::geometry::Angle angle) {
+    auto* lvl = activeLevel();
+    if (!lvl || m_selection.empty()) return;
+
+    auto summary = m_selection.summarize(*lvl);
+    kalara::core::geometry::Point2D pivot(0.0, 0.0);
+    if (summary.boundingBox.has_value()) {
+        pivot = summary.boundingBox->center();
+    }
+
+    kalara::runtime::ModelManipulator::rotateEntities(*lvl, m_selection.selectedList(), pivot, angle);
+    update();
+}
+
+void ViewportWidget::alignSelection(kalara::runtime::AlignmentType alignment) {
+    auto* lvl = activeLevel();
+    if (!lvl || m_selection.count() < 2) return;
+
+    kalara::runtime::ModelManipulator::alignEntities(*lvl, m_selection.selectedList(), alignment);
+    update();
+}
+
 void ViewportWidget::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::MiddleButton ||
         (event->button() == Qt::LeftButton && (event->modifiers() & Qt::AltModifier))) {
         m_isPanning = true;
         m_lastMousePos = event->pos();
         event->accept();
-    } else if (event->button() == Qt::LeftButton) {
-        // Selection hit-test order: Doors/Windows -> Walls -> Rooms -> Sites
-        auto worldPos = m_state.screenToWorld(event->position().x(), event->position().y());
-        bool found = false;
+        return;
+    }
 
-        if (!(event->modifiers() & Qt::ShiftModifier)) {
-            m_selection.clear();
-        }
+    if (event->button() == Qt::LeftButton) {
+        m_pressScreenPos = event->pos();
+        auto rawWorld = m_state.screenToWorld(event->position().x(), event->position().y());
+        m_pressWorldPos = rawWorld;
+        m_dragCurrentWorldPos = rawWorld;
 
-        if (m_project) {
-            for (const auto& site : m_project->sites()) {
-                for (const auto& bld : site->buildings()) {
-                    for (const auto& lvl : bld->levels()) {
-                        // 1. Check doors
-                        for (const auto& door : lvl->doors()) {
-                            auto* w = lvl->findWall(door->hostWallId);
-                            if (w && door->containsPoint(worldPos, *w)) {
-                                m_selection.select(door->id);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (found) break;
+        // Check if user clicked on an entity
+        auto* lvl = activeLevel();
+        std::optional<kalara::architecture::EntityId> hitId;
 
-                        // 2. Check windows
-                        for (const auto& win : lvl->windows()) {
-                            auto* w = lvl->findWall(win->hostWallId);
-                            if (w && win->containsPoint(worldPos, *w)) {
-                                m_selection.select(win->id);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (found) break;
-
-                        // 3. Check walls
-                        for (const auto& wall : lvl->walls()) {
-                            if (wall->containsPoint(worldPos)) {
-                                m_selection.select(wall->id);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (found) break;
-
-                        // 4. Check rooms
-                        for (const auto& room : lvl->rooms()) {
-                            if (room->containsPoint(worldPos)) {
-                                m_selection.select(room->id);
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (found) break;
-                    }
-                    if (found) break;
+        if (lvl) {
+            // 1. Check doors
+            for (const auto& door : lvl->doors()) {
+                auto* w = lvl->findWall(door->hostWallId);
+                if (w && door->containsPoint(rawWorld, *w)) {
+                    hitId = door->id;
+                    break;
                 }
-                if (found) break;
-                if (kalara::core::geometry::GeometricOps::pointInPolygon(worldPos, site->propertyBoundary)) {
-                    m_selection.select(site->id);
+            }
+            // 2. Check windows
+            if (!hitId) {
+                for (const auto& win : lvl->windows()) {
+                    auto* w = lvl->findWall(win->hostWallId);
+                    if (w && win->containsPoint(rawWorld, *w)) {
+                        hitId = win->id;
+                        break;
+                    }
+                }
+            }
+            // 3. Check walls
+            if (!hitId) {
+                for (const auto& wall : lvl->walls()) {
+                    if (wall->containsPoint(rawWorld)) {
+                        hitId = wall->id;
+                        break;
+                    }
+                }
+            }
+            // 4. Check rooms
+            if (!hitId) {
+                for (const auto& room : lvl->rooms()) {
+                    if (room->containsPoint(rawWorld)) {
+                        hitId = room->id;
+                        break;
+                    }
                 }
             }
         }
+
+        if (hitId) {
+            if (event->modifiers() & Qt::ShiftModifier) {
+                // Multi-select toggle
+                m_selection.toggle(*hitId);
+            } else if (event->modifiers() & Qt::ControlModifier) {
+                // Additive select
+                m_selection.select(*hitId);
+            } else {
+                // If clicked item is not in current selection, select only it
+                if (!m_selection.isSelected(*hitId)) {
+                    m_selection.clear();
+                    m_selection.select(*hitId);
+                }
+            }
+            // Prepare for potential drag move of selected entities
+            m_mode = ViewportInteractionMode::DragMove;
+            emit selectionChanged();
+        } else {
+            // Clicked empty canvas space
+            if (!(event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier))) {
+                m_selection.clear();
+                emit selectionChanged();
+            }
+            // Start rubberband marquee selection
+            m_mode = ViewportInteractionMode::RubberbandSelect;
+        }
+
         update();
         event->accept();
     }
@@ -406,28 +514,84 @@ void ViewportWidget::mouseMoveEvent(QMouseEvent *event) {
         m_state.panByScreenDelta(delta.x(), delta.y());
         update();
         event->accept();
-    } else {
-        auto rawWorld = m_state.screenToWorld(event->position().x(), event->position().y());
-        if (m_grid.snapEnabled) {
-            m_cursorWorld = m_grid.snap(rawWorld);
-        } else {
-            m_cursorWorld = rawWorld;
-        }
-
-        if (m_orthogonalMode) {
-            m_cursorWorld = kalara::core::geometry::GeometricOps::snapToOrthogonal(
-                kalara::core::geometry::Point2D(0.0, 0.0), m_cursorWorld
-            );
-        }
-
-        emit cursorCoordinatesChanged(m_cursorWorld.x, m_cursorWorld.y);
-        event->accept();
+        return;
     }
+
+    auto rawWorld = m_state.screenToWorld(event->position().x(), event->position().y());
+    auto* lvl = activeLevel();
+
+    // Perform semantic snapping (Rule 12)
+    if (lvl) {
+        m_currentSnap = kalara::runtime::SnappingEngine::snap(
+            rawWorld, *lvl, 150.0 / m_state.scale, m_grid.snapEnabled, m_grid.secondarySpacing_mm
+        );
+    } else {
+        m_currentSnap.snapped = false;
+    }
+
+    if (m_currentSnap.snapped) {
+        m_cursorWorld = m_currentSnap.point;
+    } else if (m_grid.snapEnabled) {
+        m_cursorWorld = m_grid.snap(rawWorld);
+    } else {
+        m_cursorWorld = rawWorld;
+    }
+
+    if (m_orthogonalMode) {
+        m_cursorWorld = kalara::core::geometry::GeometricOps::snapToOrthogonal(
+            kalara::core::geometry::Point2D(0.0, 0.0), m_cursorWorld
+        );
+    }
+
+    m_dragCurrentWorldPos = m_cursorWorld;
+
+    if (m_mode == ViewportInteractionMode::RubberbandSelect) {
+        update();
+    } else if (m_mode == ViewportInteractionMode::DragMove && (event->buttons() & Qt::LeftButton)) {
+        // Interactive live drag move
+        if (lvl && !m_selection.empty()) {
+            kalara::core::geometry::Vector2D delta = m_cursorWorld - m_pressWorldPos;
+            if (delta.lengthSquared() > 0.0) {
+                kalara::runtime::ModelManipulator::moveEntities(*lvl, m_selection.selectedList(), delta, false);
+                m_pressWorldPos = m_cursorWorld;
+            }
+        }
+        update();
+    }
+
+    emit cursorCoordinatesChanged(m_cursorWorld.x, m_cursorWorld.y);
+    event->accept();
 }
 
 void ViewportWidget::mouseReleaseEvent(QMouseEvent *event) {
-    if (event->button() == Qt::MiddleButton || event->button() == Qt::LeftButton) {
+    if (event->button() == Qt::MiddleButton ||
+        (event->button() == Qt::LeftButton && m_isPanning)) {
         m_isPanning = false;
+        event->accept();
+        return;
+    }
+
+    if (event->button() == Qt::LeftButton) {
+        if (m_mode == ViewportInteractionMode::RubberbandSelect) {
+            auto* lvl = activeLevel();
+            if (lvl) {
+                double minX = std::min(m_pressWorldPos.x, m_dragCurrentWorldPos.x);
+                double maxX = std::max(m_pressWorldPos.x, m_dragCurrentWorldPos.x);
+                double minY = std::min(m_pressWorldPos.y, m_dragCurrentWorldPos.y);
+                double maxY = std::max(m_pressWorldPos.y, m_dragCurrentWorldPos.y);
+
+                // If drag was greater than a small click threshold, perform box select
+                if ((maxX - minX > 50.0) || (maxY - minY > 50.0)) {
+                    kalara::core::geometry::Rect2D marquee(minX, minY, maxX - minX, maxY - minY);
+                    bool additive = (event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier));
+                    m_selection.selectInRect(marquee, *lvl, additive);
+                    emit selectionChanged();
+                }
+            }
+        }
+
+        m_mode = ViewportInteractionMode::Select;
+        update();
         event->accept();
     }
 }
@@ -445,6 +609,30 @@ void ViewportWidget::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Shift) {
         setOrthogonalMode(true);
     }
+    // Manipulation keyboard shortcuts
+    if (event->key() == Qt::Key_Left) {
+        moveSelection(kalara::core::geometry::Vector2D(-100.0, 0.0));
+        event->accept();
+        return;
+    } else if (event->key() == Qt::Key_Right) {
+        moveSelection(kalara::core::geometry::Vector2D(100.0, 0.0));
+        event->accept();
+        return;
+    } else if (event->key() == Qt::Key_Up) {
+        moveSelection(kalara::core::geometry::Vector2D(0.0, 100.0));
+        event->accept();
+        return;
+    } else if (event->key() == Qt::Key_Down) {
+        moveSelection(kalara::core::geometry::Vector2D(0.0, -100.0));
+        event->accept();
+        return;
+    } else if (event->key() == Qt::Key_R) {
+        // Rotate selected entities 90 degrees CCW
+        rotateSelection(kalara::core::geometry::Angle::fromDegrees(90.0));
+        event->accept();
+        return;
+    }
+
     QOpenGLWidget::keyPressEvent(event);
 }
 
@@ -456,3 +644,4 @@ void ViewportWidget::keyReleaseEvent(QKeyEvent *event) {
 }
 
 } // namespace kalara::editor
+

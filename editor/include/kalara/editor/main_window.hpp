@@ -21,6 +21,7 @@ public:
 private slots:
     void onCursorCoordinatesChanged(double x_mm, double y_mm);
     void onZoomChanged(double scale);
+    void onSelectionChanged();
 
 private:
     void setupUI();

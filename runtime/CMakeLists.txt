@@ -1,7 +1,10 @@
 add_library(kalara_runtime
     include/kalara/runtime/runtime_context.hpp
     include/kalara/runtime/selection_manager.hpp
+    include/kalara/runtime/snapping_engine.hpp
+    include/kalara/runtime/model_manipulator.hpp
     src/runtime_context.cpp
+    src/model_manipulator.cpp
 )
 
 target_include_directories(kalara_runtime PUBLIC

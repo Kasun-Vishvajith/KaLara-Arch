@@ -86,6 +86,8 @@ void MainWindow::setupUI() {
             this, &MainWindow::onCursorCoordinatesChanged);
     connect(m_viewport, &ViewportWidget::zoomChanged,
             this, &MainWindow::onZoomChanged);
+    connect(m_viewport, &ViewportWidget::selectionChanged,
+            this, &MainWindow::onSelectionChanged);
 }
 
 void MainWindow::onCursorCoordinatesChanged(double x_mm, double y_mm) {
@@ -99,6 +101,29 @@ void MainWindow::onZoomChanged(double scale) {
     // 0.1 scale is 100% nominal display (10 pixels = 100mm)
     int zoomPercent = static_cast<int>(std::round((scale / 0.1) * 100.0));
     m_zoomLabel->setText(QString("Zoom: %1%").arg(zoomPercent));
+}
+
+void MainWindow::onSelectionChanged() {
+    auto& sel = m_viewport->selectionManager();
+    if (sel.empty()) {
+        m_statusLabel->setText("Ready [Pan: MMB / Alt+LMB, Zoom: Wheel, Snap: Grid/Ortho, Select: LMB / Drag Box]");
+    } else {
+        auto* site = m_project ? m_project->defaultSite() : nullptr;
+        auto* bld = (site && !site->buildings().empty()) ? site->buildings().front().get() : nullptr;
+        auto* lvl = (bld && !bld->levels().empty()) ? bld->levels().front().get() : nullptr;
+
+        if (lvl) {
+            auto summary = sel.summarize(*lvl);
+            QString info = QString("Selected: %1 entities (Walls: %2, Rooms: %3, Openings: %4)")
+                .arg(summary.totalCount)
+                .arg(summary.wallCount)
+                .arg(summary.roomCount)
+                .arg(summary.doorCount + summary.windowCount);
+            m_statusLabel->setText(info + " [Drag: Move, Arrow keys: Nudge, R: Rotate 90°]");
+        } else {
+            m_statusLabel->setText(QString("Selected: %1 entities").arg(sel.count()));
+        }
+    }
 }
 
 } // namespace kalara::editor
