@@ -1,6 +1,7 @@
 #include "kalara/editor/main_window.hpp"
 #include "kalara/editor/library_browser_widget.hpp"
 #include "kalara/editor/level_manager_widget.hpp"
+#include "kalara/editor/site_plan_widget.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
@@ -105,6 +106,18 @@ void MainWindow::setupUI() {
         onSelectionChanged();
     });
     connect(m_levelManager, &LevelManagerWidget::levelStructureChanged, this, [this]() {
+        m_viewport->update();
+    });
+
+    // Dockable Site Planning & Setbacks Panel (Step 13)
+    auto *siteDock = new QDockWidget("Site Planning & Setbacks", this);
+    siteDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_sitePlan = new SitePlanWidget(m_project.get(), siteDock);
+    siteDock->setWidget(m_sitePlan);
+    addDockWidget(Qt::RightDockWidgetArea, siteDock);
+    tabifyDockWidget(levelDock, siteDock);
+
+    connect(m_sitePlan, &SitePlanWidget::siteModified, this, [this]() {
         m_viewport->update();
     });
 

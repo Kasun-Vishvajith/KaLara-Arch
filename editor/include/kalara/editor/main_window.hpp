@@ -30,6 +30,7 @@ private:
     ViewportWidget *m_viewport = nullptr;
     class LibraryBrowserWidget *m_libraryBrowser = nullptr;
     class LevelManagerWidget *m_levelManager = nullptr;
+    class SitePlanWidget *m_sitePlan = nullptr;
     QLabel *m_coordLabel = nullptr;
     QLabel *m_zoomLabel = nullptr;
     QLabel *m_statusLabel = nullptr;

@@ -148,3 +148,15 @@ target_link_libraries(test_multilevel PRIVATE
 target_compile_features(test_multilevel PRIVATE cxx_std_20)
 add_test(NAME multilevel_test COMMAND test_multilevel)
 
+add_executable(test_site
+    test_site.cpp
+)
+
+target_link_libraries(test_site PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_site PRIVATE cxx_std_20)
+add_test(NAME site_test COMMAND test_site)
+

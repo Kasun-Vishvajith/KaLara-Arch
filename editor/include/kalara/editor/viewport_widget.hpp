@@ -69,7 +69,8 @@ private:
     void drawGrid(QPainter& painter);
     void drawOrigin(QPainter& painter);
     void drawSiteAndBuildings(QPainter& painter);
-    void drawNorthArrow(QPainter& painter);
+    void drawSitePlan(QPainter& painter, const kalara::architecture::Site& site);
+    void drawNorthArrow(QPainter& painter, double northAngle_deg = 0.0);
     void drawMarquee(QPainter& painter);
     void drawSnapIndicator(QPainter& painter);
 

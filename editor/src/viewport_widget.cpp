@@ -109,6 +109,9 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
             painter.drawPolygon(poly);
         }
 
+        // Draw Site Planning elements (roads, landscape, setbacks, parking, pools, spot elevations)
+        drawSitePlan(painter, *site);
+
         // 2. Draw Rooms (shaded floor fill, name, and area labels)
         for (const auto& bld : site->buildings()) {
             for (const auto& lvl : bld->levels()) {
@@ -401,10 +404,218 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
     }
 
     // 8. Draw North Arrow in top-right viewport corner
-    drawNorthArrow(painter);
+    double northAngle = 0.0;
+    if (m_project && m_project->defaultSite()) {
+        northAngle = m_project->defaultSite()->northAngle_deg;
+    }
+    drawNorthArrow(painter, northAngle);
 }
 
-void ViewportWidget::drawNorthArrow(QPainter& painter) {
+void ViewportWidget::drawSitePlan(QPainter& painter, const kalara::architecture::Site& site) {
+    // 1. Draw Roads
+    for (const auto& road : site.roads()) {
+        auto dir = road->centerline.direction();
+        kalara::core::geometry::Vector2D perp(-dir.dy, dir.dx);
+        double hw = road->width_mm * 0.5;
+
+        kalara::core::geometry::Point2D p1 = road->centerline.start + perp * hw;
+        kalara::core::geometry::Point2D p2 = road->centerline.end + perp * hw;
+        kalara::core::geometry::Point2D p3 = road->centerline.end - perp * hw;
+        kalara::core::geometry::Point2D p4 = road->centerline.start - perp * hw;
+
+        QPolygonF roadPoly;
+        for (const auto& pt : {p1, p2, p3, p4}) {
+            auto s = m_state.worldToScreen(pt);
+            roadPoly.append(QPointF(s.x, s.y));
+        }
+        painter.setPen(QPen(QColor(120, 125, 135), 1.5));
+        painter.setBrush(QColor(50, 53, 60, 180));
+        painter.drawPolygon(roadPoly);
+
+        // Centerline dashed
+        auto cs = m_state.worldToScreen(road->centerline.start);
+        auto ce = m_state.worldToScreen(road->centerline.end);
+        painter.setPen(QPen(QColor(230, 210, 100, 160), 1.0, Qt::DashLine));
+        painter.drawLine(QPointF(cs.x, cs.y), QPointF(ce.x, ce.y));
+
+        // Road Name
+        auto mid = m_state.worldToScreen(road->centerline.midpoint());
+        painter.setPen(QColor(200, 205, 215));
+        QFont f = painter.font();
+        f.setPointSize(8);
+        painter.setFont(f);
+        painter.drawText(QRectF(mid.x - 100, mid.y - 12, 200, 24), Qt::AlignCenter, QString::fromStdString(road->name));
+    }
+
+    // 2. Draw Landscape Zones
+    for (const auto& lnd : site.landscapeZones()) {
+        QPolygonF poly;
+        for (const auto& p : lnd->boundary) {
+            auto s = m_state.worldToScreen(p);
+            poly.append(QPointF(s.x, s.y));
+        }
+        QColor fillCol;
+        QColor borderCol;
+        switch (lnd->type) {
+            case kalara::architecture::LandscapeType::Lawn:
+                fillCol = QColor(65, 145, 75, 45);
+                borderCol = QColor(50, 130, 60, 120);
+                break;
+            case kalara::architecture::LandscapeType::Garden:
+                fillCol = QColor(100, 140, 65, 45);
+                borderCol = QColor(85, 120, 50, 120);
+                break;
+            case kalara::architecture::LandscapeType::PavedDriveway:
+            case kalara::architecture::LandscapeType::Hardscape:
+                fillCol = QColor(70, 75, 85, 70);
+                borderCol = QColor(100, 105, 115, 140);
+                break;
+            case kalara::architecture::LandscapeType::PavedPatio:
+            case kalara::architecture::LandscapeType::Deck:
+                fillCol = QColor(180, 160, 130, 50);
+                borderCol = QColor(150, 130, 100, 120);
+                break;
+        }
+        painter.setPen(QPen(borderCol, 1.0, Qt::DashLine));
+        painter.setBrush(fillCol);
+        painter.drawPolygon(poly);
+
+        // Zone label
+        if (!lnd->boundary.empty()) {
+            auto bbox = kalara::core::geometry::GeometricOps::boundingBox(lnd->boundary);
+            auto c = m_state.worldToScreen(bbox.center());
+            painter.setPen(QColor(180, 190, 180));
+            QFont f = painter.font();
+            f.setPointSize(8);
+            painter.setFont(f);
+            painter.drawText(QRectF(c.x - 75, c.y - 10, 150, 20), Qt::AlignCenter,
+                             QString::fromStdString(lnd->name) + QString(" (%1 m²)").arg(lnd->area_mm2() / 1e6, 0, 'f', 1));
+        }
+    }
+
+    // 3. Draw Setback Envelope (Buildable Area)
+    auto envelope = site.buildableEnvelope();
+    if (envelope.size() >= 3) {
+        QPolygonF envPoly;
+        for (const auto& p : envelope) {
+            auto s = m_state.worldToScreen(p);
+            envPoly.append(QPointF(s.x, s.y));
+        }
+        painter.setPen(QPen(QColor(230, 110, 70, 180), 1.5, Qt::DashDotLine));
+        painter.setBrush(QColor(230, 110, 70, 15));
+        painter.drawPolygon(envPoly);
+
+        // Label along top of envelope
+        auto topPt = m_state.worldToScreen(envelope[2]);
+        painter.setPen(QColor(230, 120, 80, 200));
+        QFont f = painter.font();
+        f.setPointSize(8);
+        painter.setFont(f);
+        painter.drawText(QRectF(topPt.x - 120, topPt.y - 18, 240, 18), Qt::AlignCenter, "Buildable Setback Envelope");
+    }
+
+    // 4. Draw Parking Zones
+    for (const auto& prk : site.parkingZones()) {
+        auto stalls = prk->stallOutlines();
+        for (size_t i = 0; i < stalls.size(); ++i) {
+            QPolygonF stallPoly;
+            for (const auto& pt : stalls[i]) {
+                auto s = m_state.worldToScreen(pt);
+                stallPoly.append(QPointF(s.x, s.y));
+            }
+            painter.setPen(QPen(QColor(240, 240, 210, 200), 1.5));
+            painter.setBrush(QColor(60, 65, 75, 80));
+            painter.drawPolygon(stallPoly);
+
+            // Stall label "P1", "P2"
+            auto sc = m_state.worldToScreen(kalara::core::geometry::GeometricOps::boundingBox(stalls[i]).center());
+            painter.setPen(QColor(240, 240, 210));
+            QFont f = painter.font();
+            f.setPointSize(8);
+            f.setBold(true);
+            painter.setFont(f);
+            painter.drawText(QRectF(sc.x - 20, sc.y - 10, 40, 20), Qt::AlignCenter,
+                             (prk->isAccessible && i == 0) ? QString("♿ P%1").arg(i + 1) : QString("P%1").arg(i + 1));
+        }
+    }
+
+    // 5. Draw Entrances
+    for (const auto& ent : site.entrances()) {
+        auto s = m_state.worldToScreen(ent->position);
+        double sw = ent->width_mm * m_state.scale;
+        painter.setPen(QPen(QColor(240, 200, 80), 2.0));
+        painter.drawLine(QPointF(s.x - sw * 0.5, s.y), QPointF(s.x + sw * 0.5, s.y));
+
+        painter.setPen(QColor(240, 200, 80));
+        QFont f = painter.font();
+        f.setPointSize(8);
+        painter.setFont(f);
+        painter.drawText(QRectF(s.x - 75, s.y - 16, 150, 16), Qt::AlignCenter, QString::fromStdString(ent->name));
+    }
+
+    // 6. Draw Pools & Outdoor Elements
+    for (const auto& out : site.outdoorElements()) {
+        // Draw coping deck
+        auto coping = out->copingBoundary();
+        if (!coping.empty()) {
+            QPolygonF copingPoly;
+            for (const auto& p : coping) {
+                auto s = m_state.worldToScreen(p);
+                copingPoly.append(QPointF(s.x, s.y));
+            }
+            painter.setPen(QPen(QColor(170, 165, 155), 1.5));
+            painter.setBrush(QColor(185, 180, 170, 90));
+            painter.drawPolygon(copingPoly);
+        }
+
+        // Draw pool water
+        QPolygonF waterPoly;
+        for (const auto& p : out->boundary) {
+            auto s = m_state.worldToScreen(p);
+            waterPoly.append(QPointF(s.x, s.y));
+        }
+        painter.setPen(QPen(QColor(40, 170, 230), 2.0));
+        painter.setBrush(QColor(40, 170, 230, 130));
+        painter.drawPolygon(waterPoly);
+
+        // Water ripple detail line
+        if (waterPoly.size() >= 4) {
+            painter.setPen(QPen(QColor(255, 255, 255, 90), 1.0, Qt::DashLine));
+            QPointF midL = (waterPoly[0] + waterPoly[3]) * 0.5;
+            QPointF midR = (waterPoly[1] + waterPoly[2]) * 0.5;
+            painter.drawLine(midL, midR);
+        }
+
+        // Label
+        auto wc = m_state.worldToScreen(kalara::core::geometry::GeometricOps::boundingBox(out->boundary).center());
+        painter.setPen(QColor(255, 255, 255));
+        QFont f = painter.font();
+        f.setPointSize(8);
+        f.setBold(true);
+        painter.setFont(f);
+        painter.drawText(QRectF(wc.x - 80, wc.y - 16, 160, 32), Qt::AlignCenter,
+                         QString::fromStdString(out->name) + QString("\n%1 m² | %2 L").arg(out->waterArea_mm2() / 1e6, 0, 'f', 1).arg(static_cast<int>(std::round(out->waterVolume_liters()))));
+    }
+
+    // 7. Draw Spot Elevations
+    for (const auto& spot : site.spotElevations) {
+        auto s = m_state.worldToScreen(spot.position);
+        painter.setPen(QPen(QColor(180, 220, 240), 1.0));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(QPointF(s.x, s.y), 4.0, 4.0);
+        painter.drawLine(QPointF(s.x - 7.0, s.y), QPointF(s.x + 7.0, s.y));
+        painter.drawLine(QPointF(s.x, s.y - 7.0), QPointF(s.x, s.y + 7.0));
+
+        painter.setPen(QColor(180, 220, 240));
+        QFont f = painter.font();
+        f.setPointSize(8);
+        painter.setFont(f);
+        QString label = spot.label.empty() ? QString("%1 mm").arg(spot.elevation_mm, 0, 'f', 0) : QString::fromStdString(spot.label);
+        painter.drawText(QPointF(s.x + 8.0, s.y - 2.0), label);
+    }
+}
+
+void ViewportWidget::drawNorthArrow(QPainter& painter, double northAngle_deg) {
     double nx = m_state.viewportWidth - 60.0;
     double ny = 60.0;
 
@@ -416,15 +627,19 @@ void ViewportWidget::drawNorthArrow(QPainter& painter) {
     painter.setBrush(Qt::NoBrush);
     painter.drawEllipse(QPointF(nx, ny), 22.0, 22.0);
 
+    // Translate and rotate needle by northAngle_deg
+    painter.translate(nx, ny);
+    painter.rotate(northAngle_deg);
+
     // Arrow pointer towards North (-Y in screen space)
     QPolygonF arrow;
-    arrow << QPointF(nx, ny - 18.0) << QPointF(nx + 6.0, ny + 10.0) << QPointF(nx, ny + 4.0);
+    arrow << QPointF(0, -18.0) << QPointF(6.0, 10.0) << QPointF(0, 4.0);
     painter.setBrush(QColor(220, 60, 60));
     painter.setPen(Qt::NoPen);
     painter.drawPolygon(arrow);
 
     QPolygonF arrowLeft;
-    arrowLeft << QPointF(nx, ny - 18.0) << QPointF(nx - 6.0, ny + 10.0) << QPointF(nx, ny + 4.0);
+    arrowLeft << QPointF(0, -18.0) << QPointF(-6.0, 10.0) << QPointF(0, 4.0);
     painter.setBrush(QColor(180, 185, 195));
     painter.drawPolygon(arrowLeft);
 
@@ -434,7 +649,7 @@ void ViewportWidget::drawNorthArrow(QPainter& painter) {
     font.setBold(true);
     painter.setFont(font);
     painter.setPen(QColor(240, 240, 240));
-    painter.drawText(QRectF(nx - 15.0, ny - 38.0, 30.0, 20.0), Qt::AlignCenter, "N");
+    painter.drawText(QRectF(-15.0, -36.0, 30.0, 16.0), Qt::AlignCenter, "N");
 
     painter.restore();
 }
