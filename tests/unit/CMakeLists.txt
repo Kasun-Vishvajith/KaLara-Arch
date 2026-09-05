@@ -96,3 +96,15 @@ target_link_libraries(test_annotation PRIVATE
 
 target_compile_features(test_annotation PRIVATE cxx_std_20)
 add_test(NAME annotation_test COMMAND test_annotation)
+
+add_executable(test_constraint
+    test_constraint.cpp
+)
+
+target_link_libraries(test_constraint PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_constraint PRIVATE cxx_std_20)
+add_test(NAME constraint_test COMMAND test_constraint)
