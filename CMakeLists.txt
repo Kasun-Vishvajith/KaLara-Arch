@@ -16,7 +16,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
 # Find Qt 6 Packages
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets OpenGLWidgets)
 
 # Enable Testing
 enable_testing()

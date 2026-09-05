@@ -34,3 +34,17 @@ target_link_libraries(test_data_model PRIVATE
 
 target_compile_features(test_data_model PRIVATE cxx_std_20)
 add_test(NAME data_model_test COMMAND test_data_model)
+
+add_executable(test_viewport
+    test_viewport.cpp
+)
+
+target_link_libraries(test_viewport PRIVATE
+    kalara_editor
+    kalara_runtime
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_viewport PRIVATE cxx_std_20)
+add_test(NAME viewport_test COMMAND test_viewport)

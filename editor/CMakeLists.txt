@@ -1,5 +1,9 @@
 add_library(kalara_editor
+    include/kalara/editor/viewport_state.hpp
+    include/kalara/editor/grid_settings.hpp
+    include/kalara/editor/viewport_widget.hpp
     include/kalara/editor/main_window.hpp
+    src/viewport_widget.cpp
     src/main_window.cpp
 )
 
@@ -13,6 +17,7 @@ target_link_libraries(kalara_editor PUBLIC
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
+    Qt6::OpenGLWidgets
 )
 
 target_compile_features(kalara_editor PUBLIC cxx_std_20)

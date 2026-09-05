@@ -1,5 +1,6 @@
 add_library(kalara_runtime
     include/kalara/runtime/runtime_context.hpp
+    include/kalara/runtime/selection_manager.hpp
     src/runtime_context.cpp
 )
 
