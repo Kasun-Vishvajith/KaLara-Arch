@@ -98,7 +98,24 @@ size_t ModelManipulator::moveEntities(
         }
     }
 
-    // 6. Always synchronize associative dimensions (Rule 7)
+    // 6. Move Roofs (Step 12)
+    for (const auto& id : targetSet) {
+        if (auto* roof = level.findRoof(id)) {
+            for (auto& p : roof->wallFootprint) {
+                p = p + delta_mm;
+            }
+            for (auto& p : roof->eaveBoundary) {
+                p = p + delta_mm;
+            }
+            for (auto& r : roof->ridgeLines) {
+                r.start = r.start + delta_mm;
+                r.end = r.end + delta_mm;
+            }
+            ++movedCount;
+        }
+    }
+
+    // 7. Always synchronize associative dimensions (Rule 7)
     level.syncDimensions();
 
     return movedCount;
@@ -170,6 +187,23 @@ size_t ModelManipulator::rotateEntities(
         }
     }
 
+    // Rotate roofs (boundary and ridge lines)
+    for (const auto& id : targetSet) {
+        if (auto* roof = level.findRoof(id)) {
+            for (auto& p : roof->wallFootprint) {
+                p = rot.map(p);
+            }
+            for (auto& p : roof->eaveBoundary) {
+                p = rot.map(p);
+            }
+            for (auto& r : roof->ridgeLines) {
+                r.start = rot.map(r.start);
+                r.end = rot.map(r.end);
+            }
+            ++rotatedCount;
+        }
+    }
+
     // Synchronize associative dimensions
     level.syncDimensions();
 
@@ -206,6 +240,12 @@ size_t ModelManipulator::alignEntities(
             }
         } else if (auto* inst = level.findLibraryInstance(id)) {
             auto bb = inst->boundingBox();
+            minX = std::min(minX, bb.min.x);
+            maxX = std::max(maxX, bb.max.x);
+            minY = std::min(minY, bb.min.y);
+            maxY = std::max(maxY, bb.max.y);
+        } else if (auto* roof = level.findRoof(id)) {
+            auto bb = roof->boundingBox();
             minX = std::min(minX, bb.min.x);
             maxX = std::max(maxX, bb.max.x);
             minY = std::min(minY, bb.min.y);
@@ -292,6 +332,30 @@ size_t ModelManipulator::alignEntities(
 
             if (delta.lengthSquared() > 0.0) {
                 inst->position = inst->position + delta;
+                ++alignedCount;
+            }
+        } else if (auto* roof = level.findRoof(id)) {
+            auto bb = roof->boundingBox();
+            switch (alignment) {
+                case AlignmentType::AlignLeft:    delta.dx = targetRef - bb.min.x; break;
+                case AlignmentType::AlignRight:   delta.dx = targetRef - bb.max.x; break;
+                case AlignmentType::AlignTop:     delta.dy = targetRef - bb.max.y; break;
+                case AlignmentType::AlignBottom:  delta.dy = targetRef - bb.min.y; break;
+                case AlignmentType::AlignCenterX: delta.dx = targetRef - bb.center().x; break;
+                case AlignmentType::AlignCenterY: delta.dy = targetRef - bb.center().y; break;
+            }
+
+            if (delta.lengthSquared() > 0.0) {
+                for (auto& p : roof->wallFootprint) {
+                    p = p + delta;
+                }
+                for (auto& p : roof->eaveBoundary) {
+                    p = p + delta;
+                }
+                for (auto& r : roof->ridgeLines) {
+                    r.start = r.start + delta;
+                    r.end = r.end + delta;
+                }
                 ++alignedCount;
             }
         }

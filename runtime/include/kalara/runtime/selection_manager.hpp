@@ -19,6 +19,7 @@ struct SelectionSummary {
     size_t dimensionCount = 0;
     size_t noteCount = 0;
     size_t libraryInstanceCount = 0;
+    size_t roofCount = 0;
     bool hasSite = false;
     std::optional<kalara::core::geometry::Rect2D> boundingBox;
 };
@@ -162,6 +163,15 @@ public:
             }
         }
 
+        // Check roofs (Step 12)
+        for (const auto& roof : level.roofs()) {
+            if (rect.intersects(roof->boundingBox())) {
+                if (m_selected.insert(roof->id).second) {
+                    ++added;
+                }
+            }
+        }
+
         return added;
     }
 
@@ -183,6 +193,9 @@ public:
             } else if (auto* inst = level.findLibraryInstance(id)) {
                 ++summary.libraryInstanceCount;
                 for (const auto& p : inst->worldBoundary()) pts.push_back(p);
+            } else if (auto* roof = level.findRoof(id)) {
+                ++summary.roofCount;
+                for (const auto& p : roof->eaveBoundary) pts.push_back(p);
             } else {
                 for (const auto& d : level.doors()) {
                     if (d->id == id) {

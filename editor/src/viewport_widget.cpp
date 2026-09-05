@@ -339,6 +339,63 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
                     QRectF textRect(centerScreen.x - 60.0, centerScreen.y - 12.0, 120.0, 24.0);
                     painter.drawText(textRect, Qt::AlignCenter, QString::fromStdString(inst->name));
                 }
+
+                // 9. Draw Roofs (Step 12)
+                for (const auto& roof : lvl->roofs()) {
+                    bool isSelected = m_selection.isSelected(roof->id);
+                    QPolygonF rPoly;
+                    for (const auto& p : roof->eaveBoundary) {
+                        auto s = m_state.worldToScreen(p);
+                        rPoly.append(QPointF(s.x, s.y));
+                    }
+
+                    if (isSelected) {
+                        painter.setPen(QPen(QColor(80, 220, 240), 2));
+                        painter.setBrush(QColor(180, 80, 60, 90));
+                    } else {
+                        // Terracotta / slate roof drafting representation with dark outline
+                        painter.setPen(QPen(QColor(210, 90, 70), 2));
+                        painter.setBrush(QColor(160, 70, 50, 60));
+                    }
+                    painter.drawPolygon(rPoly);
+
+                    // Draw ridge lines
+                    painter.setPen(QPen(QColor(240, 240, 240), 1.5, Qt::SolidLine));
+                    for (const auto& ridge : roof->ridgeLines) {
+                        auto s1 = m_state.worldToScreen(ridge.start);
+                        auto s2 = m_state.worldToScreen(ridge.end);
+                        painter.drawLine(QPointF(s1.x, s1.y), QPointF(s2.x, s2.y));
+                    }
+
+                    // Roof slope & pitch label
+                    if (roof->eaveBoundary.size() >= 3) {
+                        auto bb = roof->boundingBox();
+                        auto center = m_state.worldToScreen(bb.center());
+                        painter.setPen(QColor(240, 230, 220));
+                        painter.drawText(QRectF(center.x - 60.0, center.y - 10.0, 120.0, 20.0),
+                                         Qt::AlignCenter,
+                                         QString("%1 (%2°)").arg(QString::fromStdString(roof->name)).arg(roof->pitch_deg, 0, 'f', 1));
+                    }
+                }
+            }
+
+            // 10. Draw Underlay / Ghost Level Reference (Step 12)
+            auto* activeLvl = bld->activeLevel();
+            if (activeLvl && activeLvl->underlayLevelId.has_value()) {
+                auto* underlayLvl = bld->findLevel(activeLvl->underlayLevelId.value());
+                if (underlayLvl) {
+                    painter.setPen(QPen(QColor(100, 160, 255, 120), 1.2, Qt::DashLine));
+                    painter.setBrush(Qt::NoBrush);
+                    for (const auto& uw : underlayLvl->walls()) {
+                        auto corners = uw->boundaryPolygon();
+                        QPolygonF upoly;
+                        for (const auto& c : corners) {
+                            auto s = m_state.worldToScreen(c);
+                            upoly.append(QPointF(s.x, s.y));
+                        }
+                        painter.drawPolygon(upoly);
+                    }
+                }
             }
         }
     }
@@ -387,8 +444,8 @@ kalara::architecture::Level* ViewportWidget::activeLevel() const {
     auto* site = m_project->defaultSite();
     if (!site || site->buildings().empty()) return nullptr;
     auto* bld = site->buildings().front().get();
-    if (!bld || bld->levels().empty()) return nullptr;
-    return bld->levels().front().get();
+    if (!bld) return nullptr;
+    return bld->activeLevel();
 }
 
 void ViewportWidget::drawMarquee(QPainter& painter) {
@@ -533,6 +590,15 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
                 for (const auto& room : lvl->rooms()) {
                     if (room->containsPoint(rawWorld)) {
                         hitId = room->id;
+                        break;
+                    }
+                }
+            }
+            // 6. Check roofs (Step 12)
+            if (!hitId) {
+                for (const auto& roof : lvl->roofs()) {
+                    if (roof->containsPoint(rawWorld)) {
+                        hitId = roof->id;
                         break;
                     }
                 }

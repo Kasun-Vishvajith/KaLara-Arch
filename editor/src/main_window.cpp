@@ -1,5 +1,6 @@
 #include "kalara/editor/main_window.hpp"
 #include "kalara/editor/library_browser_widget.hpp"
+#include "kalara/editor/level_manager_widget.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
@@ -91,6 +92,22 @@ void MainWindow::setupUI() {
     connect(m_libraryBrowser, &LibraryBrowserWidget::placeItemRequested,
             this, &MainWindow::onPlaceLibraryItem);
 
+    // Dockable Levels & Stories Manager Panel (Step 12)
+    auto *levelDock = new QDockWidget("Levels & Stories", this);
+    levelDock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_levelManager = new LevelManagerWidget(m_project.get(), levelDock);
+    levelDock->setWidget(m_levelManager);
+    addDockWidget(Qt::RightDockWidgetArea, levelDock);
+
+    connect(m_levelManager, &LevelManagerWidget::activeLevelChanged, this, [this](const auto&) {
+        m_viewport->selectionManager().clear();
+        m_viewport->update();
+        onSelectionChanged();
+    });
+    connect(m_levelManager, &LevelManagerWidget::levelStructureChanged, this, [this]() {
+        m_viewport->update();
+    });
+
     // Status bar with live coordinate tracking (mm) and zoom level
     auto *status = statusBar();
 
@@ -133,16 +150,17 @@ void MainWindow::onSelectionChanged() {
     } else {
         auto* site = m_project ? m_project->defaultSite() : nullptr;
         auto* bld = (site && !site->buildings().empty()) ? site->buildings().front().get() : nullptr;
-        auto* lvl = (bld && !bld->levels().empty()) ? bld->levels().front().get() : nullptr;
+        auto* lvl = bld ? bld->activeLevel() : nullptr;
 
         if (lvl) {
             auto summary = sel.summarize(*lvl);
-            QString info = QString("Selected: %1 entities (Walls: %2, Rooms: %3, Openings: %4, Library: %5)")
+            QString info = QString("Selected: %1 entities (Walls: %2, Rooms: %3, Openings: %4, Library: %5, Roofs: %6)")
                 .arg(summary.totalCount)
                 .arg(summary.wallCount)
                 .arg(summary.roomCount)
                 .arg(summary.doorCount + summary.windowCount)
-                .arg(summary.libraryInstanceCount);
+                .arg(summary.libraryInstanceCount)
+                .arg(summary.roofCount);
             m_statusLabel->setText(info + " [Drag: Move, Arrow keys: Nudge, R: Rotate 90°]");
         } else {
             m_statusLabel->setText(QString("Selected: %1 entities").arg(sel.count()));
@@ -158,8 +176,9 @@ void MainWindow::onPlaceLibraryItem(const std::string& itemId) {
     auto* site = m_project->defaultSite();
     if (!site || site->buildings().empty()) return;
     auto* bld = site->buildings().front().get();
-    if (!bld || bld->levels().empty()) return;
-    auto* lvl = bld->levels().front().get();
+    if (!bld) return;
+    auto* lvl = bld->activeLevel();
+    if (!lvl) return;
 
     // Place at current cursor position in world coordinates (or viewport center)
     auto placePos = m_viewport->cursorWorld_mm();

@@ -7,6 +7,7 @@
 #include "kalara/architecture/opening.hpp"
 #include "kalara/architecture/annotation.hpp"
 #include "kalara/architecture/library_item.hpp"
+#include "kalara/architecture/roof.hpp"
 #include "kalara/architecture/room_boundary_detector.hpp"
 #include <string>
 #include <vector>
@@ -14,20 +15,48 @@
 
 namespace kalara::architecture {
 
-/// Architectural Level / Story (Principle 5).
-/// Stores walls, rooms, openings, dimensions, and annotations.
+/// Classification of architectural building levels.
+enum class LevelType {
+    Basement,
+    GroundFloor,
+    UpperFloor,
+    Mezzanine,
+    Attic,
+    Roof
+};
+
+constexpr std::string_view levelTypeName(LevelType type) noexcept {
+    switch (type) {
+        case LevelType::Basement:    return "Basement";
+        case LevelType::GroundFloor: return "Ground Floor";
+        case LevelType::UpperFloor:  return "Upper Floor";
+        case LevelType::Mezzanine:   return "Mezzanine";
+        case LevelType::Attic:       return "Attic";
+        case LevelType::Roof:        return "Roof";
+    }
+    return "Floor";
+}
+
+/// Architectural Level / Story (Principle 5 & Step 12).
+/// Stores walls, rooms, openings, dimensions, annotations, and roofs with real elevation data.
 class Level {
 public:
     EntityId id;
     std::string name;
+    LevelType type = LevelType::GroundFloor;
     double elevation_mm = 0.0;
     double height_mm = 3000.0;
+    bool visible = true;
+    bool locked = false;
+    std::optional<EntityId> underlayLevelId; // Cross-level reference (ghost floor underneath)
+    double underlayOpacity = 0.4;
     Metadata metadata;
 
     Level() : id(EntityId::generate("lvl")), name("Ground Floor") {}
-    Level(std::string levelName, double elevation, double height = 3000.0)
+    Level(std::string levelName, double elevation, double height = 3000.0, LevelType lvlType = LevelType::GroundFloor)
         : id(EntityId::generate("lvl")),
           name(std::move(levelName)),
+          type(lvlType),
           elevation_mm(elevation),
           height_mm(height) {}
 
@@ -187,6 +216,34 @@ public:
         return false;
     }
 
+    // --- Roof Management (Step 12) ---
+    Roof& addRoof(std::string roofName, RoofType type, std::vector<kalara::core::geometry::Point2D> boundary,
+                  double pitch_deg = 22.5, double overhang_mm = 600.0) {
+        m_roofs.emplace_back(std::make_unique<Roof>(std::move(roofName), type, std::move(boundary), pitch_deg, overhang_mm));
+        return *m_roofs.back();
+    }
+
+    [[nodiscard]] const std::vector<std::unique_ptr<Roof>>& roofs() const noexcept {
+        return m_roofs;
+    }
+
+    [[nodiscard]] Roof* findRoof(const EntityId& roofId) const noexcept {
+        for (const auto& r : m_roofs) {
+            if (r->id == roofId) return r.get();
+        }
+        return nullptr;
+    }
+
+    bool removeRoof(const EntityId& roofId) {
+        for (auto it = m_roofs.begin(); it != m_roofs.end(); ++it) {
+            if ((*it)->id == roofId) {
+                m_roofs.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
 private:
     std::vector<std::unique_ptr<Wall>> m_walls;
     std::vector<std::unique_ptr<Room>> m_rooms;
@@ -195,6 +252,7 @@ private:
     std::vector<std::unique_ptr<Dimension>> m_dimensions;
     std::vector<std::unique_ptr<NoteAnnotation>> m_notes;
     std::vector<std::unique_ptr<LibraryInstance>> m_libraryInstances;
+    std::vector<std::unique_ptr<Roof>> m_roofs;
 };
 
 } // namespace kalara::architecture
