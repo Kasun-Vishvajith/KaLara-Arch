@@ -22,3 +22,15 @@ target_link_libraries(test_geometry PRIVATE
 
 target_compile_features(test_geometry PRIVATE cxx_std_20)
 add_test(NAME geometry_test COMMAND test_geometry)
+
+add_executable(test_data_model
+    test_data_model.cpp
+)
+
+target_link_libraries(test_data_model PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_data_model PRIVATE cxx_std_20)
+add_test(NAME data_model_test COMMAND test_data_model)
