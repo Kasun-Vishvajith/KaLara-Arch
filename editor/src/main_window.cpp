@@ -36,10 +36,18 @@ MainWindow::MainWindow(QWidget *parent)
         ground.addWall({2500.0, -2000.0}, {2500.0, 2000.0}, 200.0);   // East wall (4000 mm)
         ground.addWall({2500.0, 2000.0}, {-2500.0, 2000.0}, 200.0);   // North wall (5000 mm)
         ground.addWall({-2500.0, 2000.0}, {-2500.0, -2000.0}, 200.0); // West wall (4000 mm)
+
+        // Add explicit Living Room space matching the wall interior (20 m^2)
+        ground.addRoom("Living Room", kalara::architecture::RoomType::LivingRoom, {
+            {-2400.0, -1900.0},
+            {2400.0, -1900.0},
+            {2400.0, 1900.0},
+            {-2400.0, 1900.0}
+        });
     }
 
     setupUI();
-    kalara::core::Logger::info("MainWindow with 2D Viewport & Walls initialized.");
+    kalara::core::Logger::info("MainWindow with 2D Viewport, Walls & Rooms initialized.");
 }
 
 void MainWindow::setupUI() {

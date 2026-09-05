@@ -107,9 +107,42 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
             painter.drawPolygon(poly);
         }
 
-        // 2. Draw Walls across buildings and levels
+        // 2. Draw Rooms (shaded floor fill, name, and area labels)
         for (const auto& bld : site->buildings()) {
             for (const auto& lvl : bld->levels()) {
+                for (const auto& room : lvl->rooms()) {
+                    bool isSelected = m_selection.isSelected(room->id);
+                    QPolygonF roomPoly;
+                    for (const auto& p : room->boundary) {
+                        auto s = m_state.worldToScreen(p);
+                        roomPoly.append(QPointF(s.x, s.y));
+                    }
+
+                    if (isSelected) {
+                        painter.setPen(QPen(QColor(80, 220, 240, 180), 1.5, Qt::DashLine));
+                        painter.setBrush(QColor(80, 220, 240, 45));
+                    } else {
+                        painter.setPen(Qt::NoPen);
+                        painter.setBrush(QColor(255, 255, 255, 12)); // Subtle floor surface fill
+                    }
+                    painter.drawPolygon(roomPoly);
+
+                    // Room label (Name + Area in m^2)
+                    auto labelPos = m_state.worldToScreen(room->labelPosition());
+                    painter.setPen(QColor(220, 225, 235));
+                    QFont font = painter.font();
+                    font.setPointSize(9);
+                    font.setBold(true);
+                    painter.setFont(font);
+
+                    QString nameStr = QString::fromStdString(room->name);
+                    QString areaStr = QString("%1 m²").arg(room->area_m2(), 0, 'f', 1);
+
+                    QRectF textRect(labelPos.x - 75.0, labelPos.y - 20.0, 150.0, 40.0);
+                    painter.drawText(textRect, Qt::AlignCenter, nameStr + "\n" + areaStr);
+                }
+
+                // 3. Draw Walls across buildings and levels
                 for (const auto& wall : lvl->walls()) {
                     bool isSelected = m_selection.isSelected(wall->id);
                     auto corners = wall->boundaryPolygon();
@@ -149,9 +182,9 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
         m_lastMousePos = event->pos();
         event->accept();
     } else if (event->button() == Qt::LeftButton) {
-        // Selection hit-test: prioritize walls over sites
+        // Selection hit-test: prioritize walls, then rooms, then sites
         auto worldPos = m_state.screenToWorld(event->position().x(), event->position().y());
-        bool foundWall = false;
+        bool found = false;
 
         if (!(event->modifiers() & Qt::ShiftModifier)) {
             m_selection.clear();
@@ -164,15 +197,24 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
                         for (const auto& wall : lvl->walls()) {
                             if (wall->containsPoint(worldPos)) {
                                 m_selection.select(wall->id);
-                                foundWall = true;
+                                found = true;
                                 break;
                             }
                         }
-                        if (foundWall) break;
+                        if (found) break;
+
+                        for (const auto& room : lvl->rooms()) {
+                            if (room->containsPoint(worldPos)) {
+                                m_selection.select(room->id);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) break;
                     }
-                    if (foundWall) break;
+                    if (found) break;
                 }
-                if (foundWall) break;
+                if (found) break;
                 if (kalara::core::geometry::GeometricOps::pointInPolygon(worldPos, site->propertyBoundary)) {
                     m_selection.select(site->id);
                 }

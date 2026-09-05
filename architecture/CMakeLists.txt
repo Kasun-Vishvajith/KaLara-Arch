@@ -5,6 +5,8 @@ add_library(kalara_architecture
     include/kalara/architecture/semantics.hpp
     include/kalara/architecture/wall.hpp
     include/kalara/architecture/wall_join.hpp
+    include/kalara/architecture/room.hpp
+    include/kalara/architecture/room_boundary_detector.hpp
     include/kalara/architecture/level.hpp
     include/kalara/architecture/building.hpp
     include/kalara/architecture/site.hpp
@@ -13,6 +15,8 @@ add_library(kalara_architecture
     src/entity_id.cpp
     src/wall.cpp
     src/wall_join.cpp
+    src/room.cpp
+    src/room_boundary_detector.cpp
 )
 
 target_include_directories(kalara_architecture PUBLIC
