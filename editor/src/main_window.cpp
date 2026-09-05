@@ -44,10 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
             {2400.0, 1900.0},
             {-2400.0, 1900.0}
         });
+
+        // Add demo door on South wall (wall 0) and demo window on North wall (wall 2)
+        const auto& walls = ground.walls();
+        if (walls.size() >= 4) {
+            ground.addDoor(walls[0]->id, 2500.0, 900.0, 2100.0, kalara::architecture::DoorSwing::LeftInswing);
+            ground.addWindow(walls[2]->id, 2500.0, 1500.0, 1200.0, 900.0, kalara::architecture::WindowType::Casement);
+        }
     }
 
     setupUI();
-    kalara::core::Logger::info("MainWindow with 2D Viewport, Walls & Rooms initialized.");
+    kalara::core::Logger::info("MainWindow with 2D Viewport, Walls, Rooms & Openings initialized.");
 }
 
 void MainWindow::setupUI() {

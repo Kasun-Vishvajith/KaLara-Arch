@@ -170,6 +170,69 @@ void ViewportWidget::drawSiteAndBuildings(QPainter& painter) {
                     painter.setPen(QPen(QColor(160, 165, 175, 100), 1, Qt::DashDotLine));
                     painter.drawLine(QPointF(startScreen.x, startScreen.y), QPointF(endScreen.x, endScreen.y));
                 }
+
+                // 4. Draw Doors (opening cutout + door leaf + swing arc)
+                for (const auto& door : lvl->doors()) {
+                    auto* hostWall = lvl->findWall(door->hostWallId);
+                    if (!hostWall) continue;
+
+                    bool isSelected = m_selection.isSelected(door->id);
+                    auto cutout = door->openingBox(*hostWall);
+
+                    // Clear wall body in opening cutout area
+                    QPolygonF cutoutPoly;
+                    for (const auto& pt : cutout) {
+                        auto s = m_state.worldToScreen(pt);
+                        cutoutPoly.append(QPointF(s.x, s.y));
+                    }
+                    painter.setPen(Qt::NoPen);
+                    painter.setBrush(QColor(32, 34, 38)); // Canvas background matches opening void
+                    painter.drawPolygon(cutoutPoly);
+
+                    // Draw opening jamb lines
+                    auto seg = door->openingSegment(*hostWall);
+                    auto p1s = m_state.worldToScreen(cutout[0]);
+                    auto p4s = m_state.worldToScreen(cutout[3]);
+                    auto p2s = m_state.worldToScreen(cutout[1]);
+                    auto p3s = m_state.worldToScreen(cutout[2]);
+
+                    painter.setPen(QPen(isSelected ? QColor(80, 220, 240) : QColor(220, 140, 60), 2));
+                    painter.drawLine(QPointF(p1s.x, p1s.y), QPointF(p4s.x, p4s.y));
+                    painter.drawLine(QPointF(p2s.x, p2s.y), QPointF(p3s.x, p3s.y));
+
+                    // Door leaf & swing arc
+                    auto hinge = door->hingePoint(*hostWall);
+                    auto hScreen = m_state.worldToScreen(hinge);
+                    double leafLengthScreen = door->width_mm * m_state.scale;
+
+                    painter.setPen(QPen(isSelected ? QColor(80, 220, 240) : QColor(220, 140, 60), 1.5, Qt::DashLine));
+                    painter.drawEllipse(QPointF(hScreen.x, hScreen.y), leafLengthScreen, leafLengthScreen);
+                }
+
+                // 5. Draw Windows (cutout + frame + glazing lines)
+                for (const auto& win : lvl->windows()) {
+                    auto* hostWall = lvl->findWall(win->hostWallId);
+                    if (!hostWall) continue;
+
+                    bool isSelected = m_selection.isSelected(win->id);
+                    auto cutout = win->openingBox(*hostWall);
+
+                    QPolygonF cutoutPoly;
+                    for (const auto& pt : cutout) {
+                        auto s = m_state.worldToScreen(pt);
+                        cutoutPoly.append(QPointF(s.x, s.y));
+                    }
+                    painter.setPen(QPen(isSelected ? QColor(80, 220, 240) : QColor(100, 180, 255), 2));
+                    painter.setBrush(QColor(100, 180, 255, 60)); // Light blue architectural glass tint
+                    painter.drawPolygon(cutoutPoly);
+
+                    // Central glazing line
+                    auto seg = win->openingSegment(*hostWall);
+                    auto s1 = m_state.worldToScreen(seg.start);
+                    auto s2 = m_state.worldToScreen(seg.end);
+                    painter.setPen(QPen(QColor(240, 245, 255), 1.5));
+                    painter.drawLine(QPointF(s1.x, s1.y), QPointF(s2.x, s2.y));
+                }
             }
         }
     }
@@ -182,7 +245,7 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
         m_lastMousePos = event->pos();
         event->accept();
     } else if (event->button() == Qt::LeftButton) {
-        // Selection hit-test: prioritize walls, then rooms, then sites
+        // Selection hit-test order: Doors/Windows -> Walls -> Rooms -> Sites
         auto worldPos = m_state.screenToWorld(event->position().x(), event->position().y());
         bool found = false;
 
@@ -194,6 +257,29 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
             for (const auto& site : m_project->sites()) {
                 for (const auto& bld : site->buildings()) {
                     for (const auto& lvl : bld->levels()) {
+                        // 1. Check doors
+                        for (const auto& door : lvl->doors()) {
+                            auto* w = lvl->findWall(door->hostWallId);
+                            if (w && door->containsPoint(worldPos, *w)) {
+                                m_selection.select(door->id);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) break;
+
+                        // 2. Check windows
+                        for (const auto& win : lvl->windows()) {
+                            auto* w = lvl->findWall(win->hostWallId);
+                            if (w && win->containsPoint(worldPos, *w)) {
+                                m_selection.select(win->id);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) break;
+
+                        // 3. Check walls
                         for (const auto& wall : lvl->walls()) {
                             if (wall->containsPoint(worldPos)) {
                                 m_selection.select(wall->id);
@@ -203,6 +289,7 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
                         }
                         if (found) break;
 
+                        // 4. Check rooms
                         for (const auto& room : lvl->rooms()) {
                             if (room->containsPoint(worldPos)) {
                                 m_selection.select(room->id);

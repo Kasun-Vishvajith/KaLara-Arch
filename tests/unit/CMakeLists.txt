@@ -72,3 +72,15 @@ target_link_libraries(test_room PRIVATE
 
 target_compile_features(test_room PRIVATE cxx_std_20)
 add_test(NAME room_test COMMAND test_room)
+
+add_executable(test_opening
+    test_opening.cpp
+)
+
+target_link_libraries(test_opening PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_opening PRIVATE cxx_std_20)
+add_test(NAME opening_test COMMAND test_opening)
