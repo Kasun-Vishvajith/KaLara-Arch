@@ -2182,6 +2182,137 @@ The project is not considered successful because it has many features.
 
 It succeeds when these workflows work.
 
+# 41A. PROJECT INITIALIZATION + TEMPLATE SYSTEM
+
+KaLara Arch should support two first-class project creation paths:
+
+```text
+Create Project
+    ├── Empty Canvas
+    └── Start from Template
+```
+
+The template path is not merely a visual preset. A template is a structured architectural starting configuration that reduces repetitive human setup and reduces unnecessary agentic AI discovery, prompting, and API calls.
+
+## Project Initialization Wizard
+
+When starting from a template, KaLara Arch should provide a guided initialization questionnaire. The questionnaire must capture known project context without forcing the user to invent information they do not yet know. Every applicable field should support an explicit `Not decided yet` / `Undecided` state.
+
+The initial questionnaire should be designed around categories such as:
+
+```text
+Project / Building Type
+Site / Land
+    - site shape
+    - site dimensions where known
+Terrain
+    - flat / sloped / irregular where known
+Levels
+    - planned floor count
+Measurement / Display Units
+    - metric / imperial / undecided
+Building
+    - target building area where known
+Programme / Requirements
+    - bedrooms
+    - bathrooms
+    - parking
+    - other template-specific requirements
+```
+
+The exact questionnaire may evolve with the template library. Do not make every field mandatory. The system must distinguish between a known value, an explicitly undecided value, and an omitted value where appropriate. `Undecided` must never be represented as a misleading numeric value such as zero.
+
+## Template Semantics
+
+A template should establish reusable structured architectural intent and, where appropriate, an initial arrangement of semantic architectural objects. It must not create a separate or opaque representation that bypasses the normal architectural model.
+
+Conceptually:
+
+```text
+Template + Initialization Answers
+             ↓
+    Initial Project Intent
+             ↓
+  Initial Structured State
+             ↓
+ Normal Architectural API
+```
+
+Templates may provide sensible defaults for rooms, circulation, object types, dimensions, relationships, and other starting structure, but the resulting entities must become ordinary KaLara architectural entities with stable IDs and normal editability.
+
+## Project Intent as Structured State
+
+Initialization answers should be represented as structured project intent rather than only as natural-language notes. The native project format must be capable of preserving this information alongside geometry, semantics, constraints, settings, and history metadata.
+
+A conceptual representation is:
+
+```json
+{
+  "intent": {
+    "building_type": "residential",
+    "site_shape": "trapezoid",
+    "terrain": "moderately_sloped",
+    "floor_count": 2,
+    "target_building_area_mm2": null,
+    "status": {
+      "target_building_area": "undecided"
+    }
+  }
+}
+```
+
+This is conceptual only. Do not implement a final schema before the relevant roadmap step.
+
+## AI Context Efficiency
+
+The initialization system should reduce unnecessary interaction with external AI agents by making basic project context available through structured state from the beginning. The agent should be able to retrieve a compact project summary rather than repeatedly asking the human for information already provided during initialization.
+
+For example, a template-created project might expose:
+
+```text
+Building type: Residential
+Site shape: Trapezoid
+Terrain: Moderately sloped
+Floors: 2
+Target building area: Undecided
+Measurement system: Metric
+Bedrooms: 4
+Bathrooms: 3
+Parking: 2 cars
+Template: Residential 4-Bedroom
+```
+
+This is an architectural state/context optimization, not an AI-specific secret path. Both human editing and later AI operations continue to use the same controlled architectural mutation system.
+
+## Template API Direction
+
+When the roadmap reaches project initialization and external AI API implementation, the architecture may expose operations conceptually similar to:
+
+```text
+create_project
+create_project_from_template
+instantiate_template
+update_project_intent
+get_project_context
+```
+
+These are architectural direction examples only. Do not implement them prematurely. Template creation and modification must ultimately converge on the same validated project state and mutation/transaction model used by normal human operations.
+
+## Initialization Design Rules
+
+1. Empty Canvas must remain a complete and useful project-creation path.
+2. Templates are structured starting points, not image-only presets.
+3. Initialization questions should minimize unnecessary human effort.
+4. Known information should be stored as structured data.
+5. Unknown information must remain explicitly unknown/undecided rather than being guessed.
+6. Template defaults must remain editable by the human and external AI through the normal architectural API.
+7. Template initialization must not bypass validation, stable IDs, transactions, history, or the architectural model.
+8. The initialization system must not become an excuse to build a full generative-design engine in early V1.
+9. Template selection and initialization should reduce agentic token/API overhead by providing compact structured context.
+10. Do not infer architectural decisions from missing answers without explicit human intent or an approved later planning operation.
+
+---
+
 ## Workflow A — Beginner Floor Planning
 
 ```text
@@ -2189,11 +2320,17 @@ Open KaLara Arch
  ↓
 Create project
  ↓
-Define site
+Choose Empty Canvas or Template
+ ↓
+[Template] Complete initialization questionnaire
+ ↓
+Initial structured project state
+ ↓
+Define/refine site
  ↓
 Set units/preferences
  ↓
-Create levels
+Create/refine levels
  ↓
 Draw walls
  ↓

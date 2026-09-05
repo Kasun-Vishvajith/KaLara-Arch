@@ -255,6 +255,23 @@ Keep the previous known-good commit available.
 
 Do not rewrite history without human approval.
 
+## Step 00 scope note — product architecture documentation changes
+
+Step 00 is a development-environment milestone, not an architectural implementation milestone. Product-level design decisions may be recorded in the authoritative development documents during review, but the development agent must not implement the Project Initialization + Template System, external AI runtime integration, or other later product features merely because those concepts are documented here.
+
+The Project Initialization + Template System is a planned product capability consisting of:
+
+- Empty Canvas project creation.
+- Structured template-based project creation.
+- A guided initialization questionnaire.
+- Explicit `Not decided yet` / `Undecided` states for unknown requirements.
+- Structured project intent available to the architectural model.
+- A compact initial context that can later reduce unnecessary external AI-agent discovery and API calls.
+
+This feature remains subject to the controlled roadmap in `AGENTS.md`. During Step 00, only the safe development environment and its acceptance criteria should be established.
+
+---
+
 ## Environment milestone — STEP 00
 
 The environment is ready only when:

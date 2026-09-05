@@ -40,3 +40,6 @@ env/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Toolchain installer logs
+aqtinstall.log
