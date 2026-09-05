@@ -9,11 +9,13 @@ add_library(kalara_core
     include/kalara/core/geometry/segment.hpp
     include/kalara/core/geometry/rect.hpp
     include/kalara/core/geometry/ops.hpp
+    include/kalara/core/json.hpp
     src/logging.cpp
     src/config.cpp
     src/geometry/units.cpp
     src/geometry/segment.cpp
     src/geometry/ops.cpp
+    src/json.cpp
 )
 
 target_include_directories(kalara_core PUBLIC

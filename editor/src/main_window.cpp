@@ -3,12 +3,18 @@
 #include "kalara/editor/level_manager_widget.hpp"
 #include "kalara/editor/site_plan_widget.hpp"
 #include "kalara/editor/validation_widget.hpp"
+#include "kalara/architecture/project_serializer.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
 #include <QToolBar>
+#include <QMenuBar>
+#include <QMenu>
 #include <QAction>
 #include <QDockWidget>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QFileInfo>
 #include <iomanip>
 #include <sstream>
 
@@ -80,6 +86,20 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 void MainWindow::setupUI() {
+    updateWindowTitle();
+
+    // Menu Bar & File Actions (Step 15 & Rule 4)
+    auto *menu = menuBar();
+    auto *fileMenu = menu->addMenu("&File");
+
+    fileMenu->addAction("&New Project", this, &MainWindow::newProject, QKeySequence::New);
+    fileMenu->addAction("&Open Project...", this, &MainWindow::openProject, QKeySequence::Open);
+    fileMenu->addSeparator();
+    fileMenu->addAction("&Save Project", this, &MainWindow::saveProject, QKeySequence::Save);
+    fileMenu->addAction("Save Project &As...", this, &MainWindow::saveProjectAs, QKeySequence::SaveAs);
+    fileMenu->addSeparator();
+    fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
+
     m_viewport = new ViewportWidget(this);
     m_viewport->setProject(m_project.get());
     setCentralWidget(m_viewport);
@@ -219,6 +239,100 @@ void MainWindow::onPlaceLibraryItem(const std::string& itemId) {
     m_viewport->selectionManager().select(inst.id);
     m_viewport->update();
     onSelectionChanged();
+}
+
+void MainWindow::updateWindowTitle() {
+    kalara::core::Config config;
+    QString baseTitle = QString::fromStdString(config.appName + " v" + config.version.toString());
+    if (m_currentFilePath.isEmpty()) {
+        setWindowTitle(baseTitle + " - [Untitled.kla]");
+    } else {
+        QFileInfo fi(m_currentFilePath);
+        setWindowTitle(baseTitle + " - [" + fi.fileName() + "]");
+    }
+}
+
+void MainWindow::newProject() {
+    m_project = std::make_unique<kalara::architecture::Project>("Untitled Project");
+    m_currentFilePath.clear();
+    updateWindowTitle();
+
+    m_viewport->setProject(m_project.get());
+    m_viewport->selectionManager().clear();
+    m_levelManager->setProject(m_project.get());
+    m_sitePlan->setProject(m_project.get());
+    m_validation->setProject(m_project.get());
+    m_viewport->update();
+    onSelectionChanged();
+    statusBar()->showMessage("Created new project", 3000);
+}
+
+void MainWindow::openProject() {
+    QString fileName = QFileDialog::getOpenFileName(
+        this,
+        "Open Architectural Project",
+        m_currentFilePath.isEmpty() ? QString() : QFileInfo(m_currentFilePath).absolutePath(),
+        "KaLara Arch Projects (*.kla);;All Files (*.*)"
+    );
+
+    if (fileName.isEmpty()) return;
+
+    std::string errorMsg;
+    auto loaded = kalara::architecture::ProjectSerializer::loadFromFile(fileName.toStdString(), &errorMsg);
+    if (!loaded) {
+        QMessageBox::critical(this, "Error Opening Project",
+                              QString("Failed to open '%1':\n%2")
+                              .arg(QFileInfo(fileName).fileName())
+                              .arg(QString::fromStdString(errorMsg)));
+        return;
+    }
+
+    m_project = std::move(loaded);
+    m_currentFilePath = fileName;
+    updateWindowTitle();
+
+    m_viewport->setProject(m_project.get());
+    m_viewport->selectionManager().clear();
+    m_levelManager->setProject(m_project.get());
+    m_sitePlan->setProject(m_project.get());
+    m_validation->setProject(m_project.get());
+    m_viewport->update();
+    onSelectionChanged();
+    statusBar()->showMessage("Loaded project from " + QFileInfo(fileName).fileName(), 3000);
+}
+
+bool MainWindow::saveProject() {
+    if (m_currentFilePath.isEmpty()) {
+        return saveProjectAs();
+    }
+
+    bool success = kalara::architecture::ProjectSerializer::saveToFile(*m_project, m_currentFilePath.toStdString(), 2);
+    if (!success) {
+        QMessageBox::critical(this, "Save Error", "Failed to save project to " + m_currentFilePath);
+        return false;
+    }
+
+    updateWindowTitle();
+    statusBar()->showMessage("Saved project to " + QFileInfo(m_currentFilePath).fileName(), 3000);
+    return true;
+}
+
+bool MainWindow::saveProjectAs() {
+    QString defaultName = m_currentFilePath.isEmpty() ? "house.kla" : m_currentFilePath;
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Save Architectural Project",
+        defaultName,
+        "KaLara Arch Projects (*.kla);;All Files (*.*)"
+    );
+
+    if (fileName.isEmpty()) return false;
+    if (!fileName.endsWith(".kla", Qt::CaseInsensitive)) {
+        fileName += ".kla";
+    }
+
+    m_currentFilePath = fileName;
+    return saveProject();
 }
 
 } // namespace kalara::editor

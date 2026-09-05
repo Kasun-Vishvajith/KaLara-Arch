@@ -8,6 +8,7 @@
 #include "kalara/architecture/annotation.hpp"
 #include "kalara/architecture/library_item.hpp"
 #include "kalara/architecture/roof.hpp"
+#include "kalara/architecture/constraint.hpp"
 #include "kalara/architecture/room_boundary_detector.hpp"
 #include <string>
 #include <vector>
@@ -244,6 +245,34 @@ public:
         return false;
     }
 
+    // --- Constraint Management (Step 09 & Step 15) ---
+    Constraint& addConstraint(std::string constraintName, ConstraintType type, ConstraintSeverity severity,
+                              std::vector<EntityId> targets, double value = 0.0) {
+        m_constraints.emplace_back(std::make_unique<Constraint>(std::move(constraintName), type, severity, std::move(targets), value));
+        return *m_constraints.back();
+    }
+
+    [[nodiscard]] const std::vector<std::unique_ptr<Constraint>>& constraints() const noexcept {
+        return m_constraints;
+    }
+
+    [[nodiscard]] Constraint* findConstraint(const EntityId& constraintId) const noexcept {
+        for (const auto& c : m_constraints) {
+            if (c->id == constraintId) return c.get();
+        }
+        return nullptr;
+    }
+
+    bool removeConstraint(const EntityId& constraintId) {
+        for (auto it = m_constraints.begin(); it != m_constraints.end(); ++it) {
+            if ((*it)->id == constraintId) {
+                m_constraints.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
 private:
     std::vector<std::unique_ptr<Wall>> m_walls;
     std::vector<std::unique_ptr<Room>> m_rooms;
@@ -253,6 +282,7 @@ private:
     std::vector<std::unique_ptr<NoteAnnotation>> m_notes;
     std::vector<std::unique_ptr<LibraryInstance>> m_libraryInstances;
     std::vector<std::unique_ptr<Roof>> m_roofs;
+    std::vector<std::unique_ptr<Constraint>> m_constraints;
 };
 
 } // namespace kalara::architecture

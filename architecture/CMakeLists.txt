@@ -17,6 +17,7 @@ add_library(kalara_architecture
     include/kalara/architecture/building.hpp
     include/kalara/architecture/site.hpp
     include/kalara/architecture/project.hpp
+    include/kalara/architecture/project_serializer.hpp
     src/model_info.cpp
     src/entity_id.cpp
     src/wall.cpp
@@ -27,6 +28,7 @@ add_library(kalara_architecture
     src/annotation.cpp
     src/constraint_solver.cpp
     src/library_catalog.cpp
+    src/project_serializer.cpp
 )
 
 target_include_directories(kalara_architecture PUBLIC

@@ -173,3 +173,16 @@ target_link_libraries(test_validation PRIVATE
 target_compile_features(test_validation PRIVATE cxx_std_20)
 add_test(NAME validation_test COMMAND test_validation)
 
+add_executable(test_serialization
+    test_serialization.cpp
+)
+
+target_link_libraries(test_serialization PRIVATE
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_serialization PRIVATE cxx_std_20)
+add_test(NAME serialization_test COMMAND test_serialization)
+
+

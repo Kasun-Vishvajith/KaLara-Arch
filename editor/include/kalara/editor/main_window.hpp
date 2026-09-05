@@ -18,6 +18,12 @@ public:
     [[nodiscard]] ViewportWidget* viewportWidget() const noexcept { return m_viewport; }
     [[nodiscard]] kalara::architecture::Project* project() const noexcept { return m_project.get(); }
 
+public slots:
+    void newProject();
+    void openProject();
+    bool saveProject();
+    bool saveProjectAs();
+
 private slots:
     void onCursorCoordinatesChanged(double x_mm, double y_mm);
     void onZoomChanged(double scale);
@@ -35,6 +41,9 @@ private:
     QLabel *m_coordLabel = nullptr;
     QLabel *m_zoomLabel = nullptr;
     QLabel *m_statusLabel = nullptr;
+
+    QString m_currentFilePath;
+    void updateWindowTitle();
 
     std::unique_ptr<kalara::architecture::Project> m_project;
 };
