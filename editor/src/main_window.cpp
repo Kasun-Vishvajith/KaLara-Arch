@@ -5,6 +5,9 @@
 #include "kalara/editor/validation_widget.hpp"
 #include "kalara/architecture/project_serializer.hpp"
 #include "kalara/exporters/dxf_exporter.hpp"
+#include "kalara/exporters/svg_exporter.hpp"
+#include "kalara/exporters/json_exporter.hpp"
+#include "kalara/exporters/pdf_exporter.hpp"
 #include "kalara/core/config.hpp"
 #include "kalara/core/logging.hpp"
 #include <QStatusBar>
@@ -99,7 +102,11 @@ void MainWindow::setupUI() {
     fileMenu->addAction("&Save Project", this, &MainWindow::saveProject, QKeySequence::Save);
     fileMenu->addAction("Save Project &As...", this, &MainWindow::saveProjectAs, QKeySequence::SaveAs);
     fileMenu->addSeparator();
-    fileMenu->addAction("Export &DXF...", this, &MainWindow::exportDxf, QKeySequence("Ctrl+E"));
+    auto *exportMenu = fileMenu->addMenu("&Export");
+    exportMenu->addAction("Export &DXF (AutoCAD)...", this, &MainWindow::exportDxf, QKeySequence("Ctrl+E"));
+    exportMenu->addAction("Export &SVG (Vector Graphic)...", this, &MainWindow::exportSvg);
+    exportMenu->addAction("Export &PDF (Documentation Sheet)...", this, &MainWindow::exportPdf, QKeySequence("Ctrl+P"));
+    exportMenu->addAction("Export Structured &JSON (Interchange)...", this, &MainWindow::exportJson);
     fileMenu->addSeparator();
     fileMenu->addAction("E&xit", this, &QWidget::close, QKeySequence::Quit);
 
@@ -447,6 +454,105 @@ void MainWindow::exportDxf() {
     }
 
     statusBar()->showMessage("Successfully exported DXF to " + QFileInfo(fileName).fileName(), 3000);
+}
+
+void MainWindow::exportSvg() {
+    if (!m_project) return;
+
+    QString defaultName = "drawing.svg";
+    if (!m_currentFilePath.isEmpty()) {
+        QFileInfo fi(m_currentFilePath);
+        defaultName = fi.completeBaseName() + ".svg";
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Export Scalable Vector Graphic (SVG)",
+        defaultName,
+        "SVG Files (*.svg);;All Files (*.*)"
+    );
+
+    if (fileName.isEmpty()) return;
+    if (!fileName.endsWith(".svg", Qt::CaseInsensitive)) {
+        fileName += ".svg";
+    }
+
+    kalara::exporters::ExportSettings settings;
+    settings.scale = kalara::architecture::DrawingScale::Scale_1_100;
+    settings.theme = kalara::exporters::ExportTheme::ColorPresentation;
+
+    bool success = kalara::exporters::SvgExporter::exportProjectToFile(*m_project, fileName.toStdString(), settings);
+    if (!success) {
+        QMessageBox::critical(this, "Export Error", "Failed to export SVG file to " + fileName);
+        return;
+    }
+
+    statusBar()->showMessage("Successfully exported SVG to " + QFileInfo(fileName).fileName(), 3000);
+}
+
+void MainWindow::exportPdf() {
+    if (!m_project) return;
+
+    QString defaultName = "drawing_sheet.pdf";
+    if (!m_currentFilePath.isEmpty()) {
+        QFileInfo fi(m_currentFilePath);
+        defaultName = fi.completeBaseName() + "_sheet.pdf";
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Export PDF Documentation Sheet",
+        defaultName,
+        "PDF Files (*.pdf);;All Files (*.*)"
+    );
+
+    if (fileName.isEmpty()) return;
+    if (!fileName.endsWith(".pdf", Qt::CaseInsensitive)) {
+        fileName += ".pdf";
+    }
+
+    kalara::exporters::ExportSettings settings;
+    settings.paperSize = kalara::exporters::PaperSize::A4;
+    settings.orientation = kalara::exporters::SheetOrientation::Landscape;
+    settings.scale = kalara::architecture::DrawingScale::Scale_1_100;
+
+    bool success = kalara::exporters::PdfExporter::exportProjectToPdf(*m_project, fileName.toStdString(), settings);
+    if (!success) {
+        QMessageBox::critical(this, "Export Error", "Failed to export PDF documentation sheet to " + fileName);
+        return;
+    }
+
+    statusBar()->showMessage("Successfully exported PDF sheet to " + QFileInfo(fileName).fileName(), 3000);
+}
+
+void MainWindow::exportJson() {
+    if (!m_project) return;
+
+    QString defaultName = "project.json";
+    if (!m_currentFilePath.isEmpty()) {
+        QFileInfo fi(m_currentFilePath);
+        defaultName = fi.completeBaseName() + ".json";
+    }
+
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Export Structured Interchange JSON",
+        defaultName,
+        "JSON Files (*.json);;All Files (*.*)"
+    );
+
+    if (fileName.isEmpty()) return;
+    if (!fileName.endsWith(".json", Qt::CaseInsensitive)) {
+        fileName += ".json";
+    }
+
+    bool success = kalara::exporters::JsonInterchangeExporter::exportProjectToFile(*m_project, fileName.toStdString(), 2);
+    if (!success) {
+        QMessageBox::critical(this, "Export Error", "Failed to export JSON interchange file to " + fileName);
+        return;
+    }
+
+    statusBar()->showMessage("Successfully exported JSON to " + QFileInfo(fileName).fileName(), 3000);
 }
 
 } // namespace kalara::editor

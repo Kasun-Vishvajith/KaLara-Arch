@@ -211,4 +211,19 @@ target_link_libraries(test_dxf_export PRIVATE
 target_compile_features(test_dxf_export PRIVATE cxx_std_20)
 add_test(NAME dxf_export_test COMMAND test_dxf_export)
 
+add_executable(test_multi_export
+    test_multi_export.cpp
+)
+
+target_link_libraries(test_multi_export PRIVATE
+    kalara_exporters
+    kalara_architecture
+    kalara_core
+    Qt6::Gui
+)
+
+target_compile_features(test_multi_export PRIVATE cxx_std_20)
+add_test(NAME multi_export_test COMMAND test_multi_export)
+
+
 

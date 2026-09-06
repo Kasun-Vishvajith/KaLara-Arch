@@ -4,19 +4,30 @@
 #include <QApplication>
 
 int main(int argc, char *argv[]) {
-    QApplication app(argc, argv);
+    bool isHeadless = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::string_view(argv[i]) == "--headless-test") {
+            isHeadless = true;
+            break;
+        }
+    }
 
+    if (isHeadless || qEnvironmentVariableIsSet("KALARA_HEADLESS_TEST")) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+        QApplication app(argc, argv);
+        kalara::core::Config config;
+        kalara::core::Logger::info("Starting " + config.appName + " v" + config.version.toString() + " (Headless Mode)");
+        kalara::editor::MainWindow window;
+        kalara::core::Logger::info("Headless test mode: MainWindow instantiated successfully. Exiting normally.");
+        return 0;
+    }
+
+    QApplication app(argc, argv);
     kalara::core::Config config;
     kalara::core::Logger::info("Starting " + config.appName + " v" + config.version.toString());
 
     kalara::editor::MainWindow window;
     window.show();
-
-    // Support offscreen / automated test execution if requested
-    if (qEnvironmentVariableIsSet("KALARA_HEADLESS_TEST")) {
-        kalara::core::Logger::info("Headless test mode detected. Exiting normally.");
-        return 0;
-    }
 
     return app.exec();
 }

@@ -27,6 +27,9 @@ public slots:
     bool saveProject();
     bool saveProjectAs();
     void exportDxf();
+    void exportSvg();
+    void exportPdf();
+    void exportJson();
     void undo();
     void redo();
 
