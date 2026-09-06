@@ -225,5 +225,18 @@ target_link_libraries(test_multi_export PRIVATE
 target_compile_features(test_multi_export PRIVATE cxx_std_20)
 add_test(NAME multi_export_test COMMAND test_multi_export)
 
+add_executable(test_workflow_validation
+    test_workflow_validation.cpp
+)
+
+target_link_libraries(test_workflow_validation PRIVATE
+    kalara_exporters
+    kalara_architecture
+    kalara_core
+)
+
+target_compile_features(test_workflow_validation PRIVATE cxx_std_20)
+add_test(NAME workflow_validation_test COMMAND test_workflow_validation)
+
 
 
