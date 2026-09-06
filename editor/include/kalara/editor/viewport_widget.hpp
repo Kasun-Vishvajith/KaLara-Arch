@@ -47,6 +47,7 @@ public:
     void moveSelection(const kalara::core::geometry::Vector2D& delta_mm, bool propagateConnected = false);
     void rotateSelection(kalara::core::geometry::Angle angle);
     void alignSelection(kalara::runtime::AlignmentType alignment);
+    void deleteSelection();
 
 signals:
     void cursorCoordinatesChanged(double x_mm, double y_mm);

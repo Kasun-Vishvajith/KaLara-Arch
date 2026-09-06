@@ -744,6 +744,26 @@ void ViewportWidget::alignSelection(kalara::runtime::AlignmentType alignment) {
     update();
 }
 
+void ViewportWidget::deleteSelection() {
+    auto* lvl = activeLevel();
+    if (!lvl || m_selection.empty()) return;
+
+    auto list = m_selection.selectedList();
+    for (const auto& id : list) {
+        if (lvl->removeWall(id)) continue;
+        if (lvl->removeRoom(id)) continue;
+        if (lvl->removeDoor(id)) continue;
+        if (lvl->removeWindow(id)) continue;
+        if (lvl->removeLibraryInstance(id)) continue;
+        if (lvl->removeRoof(id)) continue;
+        if (lvl->removeDimension(id)) continue;
+        if (lvl->removeNote(id)) continue;
+    }
+    m_selection.clear();
+    emit selectionChanged();
+    update();
+}
+
 void ViewportWidget::mousePressEvent(QMouseEvent *event) {
     if (event->button() == Qt::MiddleButton ||
         (event->button() == Qt::LeftButton && (event->modifiers() & Qt::AltModifier))) {
@@ -974,6 +994,11 @@ void ViewportWidget::keyPressEvent(QKeyEvent *event) {
     } else if (event->key() == Qt::Key_R) {
         // Rotate selected entities 90 degrees CCW
         rotateSelection(kalara::core::geometry::Angle::fromDegrees(90.0));
+        event->accept();
+        return;
+    } else if (event->key() == Qt::Key_Delete || event->key() == Qt::Key_Backspace) {
+        // Delete selected entities
+        deleteSelection();
         event->accept();
         return;
     }

@@ -148,6 +148,26 @@ public:
         std::erase_if(m_windows, [&](const auto& w) { return w->hostWallId == wallId; });
     }
 
+    bool removeDoor(const EntityId& doorId) {
+        for (auto it = m_doors.begin(); it != m_doors.end(); ++it) {
+            if ((*it)->id == doorId) {
+                m_doors.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool removeWindow(const EntityId& windowId) {
+        for (auto it = m_windows.begin(); it != m_windows.end(); ++it) {
+            if ((*it)->id == windowId) {
+                m_windows.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
     // --- Dimension & Annotation Management (Step 08) ---
     Dimension& addDimension(kalara::core::geometry::Point2D p1, kalara::core::geometry::Point2D p2, double offset = 500.0) {
         m_dimensions.emplace_back(std::make_unique<Dimension>(p1, p2, offset));
@@ -180,9 +200,29 @@ public:
         });
     }
 
+    bool removeDimension(const EntityId& dimId) {
+        for (auto it = m_dimensions.begin(); it != m_dimensions.end(); ++it) {
+            if ((*it)->id == dimId) {
+                m_dimensions.erase(it);
+                return true;
+            }
+        }
+        return false;
+    }
+
     NoteAnnotation& addNote(kalara::core::geometry::Point2D pos, std::string text) {
         m_notes.emplace_back(std::make_unique<NoteAnnotation>(pos, std::move(text)));
         return *m_notes.back();
+    }
+
+    bool removeNote(const EntityId& noteId) {
+        for (auto it = m_notes.begin(); it != m_notes.end(); ++it) {
+            if ((*it)->id == noteId) {
+                m_notes.erase(it);
+                return true;
+            }
+        }
+        return false;
     }
 
     [[nodiscard]] const std::vector<std::unique_ptr<NoteAnnotation>>& notes() const noexcept {
