@@ -1,0 +1,22 @@
+**********************************************************************
+** Visual Studio 2022 Developer Command Prompt v17.14.39
+** Copyright (c) 2025 Microsoft Corporation
+**********************************************************************
+[vcvarsall.bat] Environment initialized for: 'x64'
+Microsoft (R) C/C++ Optimizing Compiler Version 19.44.35228 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+usage: cl [ option... ] filename... [ /link linkoption... ]
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (0.8s)
+-- Generating done (0.2s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/probe
+[1/2] Building CXX object CMakeFiles\qt_probe.dir\qt_probe.cpp.obj
+[2/2] Linking CXX executable qt_probe.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/probe
+    Start 1: core_probe
+1/1 Test #1: core_probe .......................   Passed    0.05 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.06 sec
