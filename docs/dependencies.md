@@ -18,3 +18,7 @@ JSON, polygon operations, archive, full test framework and installer dependencie
 ## Step 01 additions
 
 Qt Test 6.7.2 from the same shared kit is the pinned development-only widget test framework. Core uses repository-owned tests run by CTest; no third-party dependency. No Qt headers or linkage enter kalara_core. Editor depends on core and Qt Widgets; model/runtime/render/adapters will be introduced as implemented in later steps, without empty targets standing in for features.
+
+## Step 03 additions
+
+The early JSON adapter uses Qt Core 6.7.2 (`QJsonDocument`) from the same shared kit. `kalara_architecture` remains Qt-free; only `kalara_persistence` links Qt Core. No separate JSON library is used or shipped. The executable schema targets JSON Schema draft 2020-12 and is application-owned data under Apache-2.0. Full third-party schema-validator conformance is not claimed; the reader performs explicit structural and semantic validation exercised by fixtures.

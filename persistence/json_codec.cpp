@@ -1,0 +1,91 @@
+#include "persistence/json_codec.h"
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
+#include <cmath>
+#include <stdexcept>
+
+namespace kalara::persistence {
+using namespace architecture;
+namespace {
+QString q(const std::string& value){return QString::fromUtf8(value);}
+std::string s(const QString& value){return value.toUtf8().toStdString();}
+QJsonArray point(geometry::Point2 value){return {value.x,value.y};}
+QJsonArray ring(const std::vector<geometry::Point2>& value){QJsonArray result;for(auto p:value)result.push_back(point(p));return result;}
+QJsonObject entityHeader(const EntityHeader& h){QJsonObject value{{"id",q(h.id.str())},{"type",QString::fromLatin1(entityTypeName(h.type))},{"ownerId",q(h.ownerId.str())},{"createdRevision",static_cast<qint64>(h.createdRevision)},{"modifiedRevision",static_cast<qint64>(h.modifiedRevision)}};if(h.layerId)value["layerId"]=q(h.layerId->str());return value;}
+QString unit(LengthDisplayUnit value){switch(value){case LengthDisplayUnit::cm:return"cm";case LengthDisplayUnit::m:return"m";case LengthDisplayUnit::inch:return"in";case LengthDisplayUnit::foot:return"ft";default:return"mm";}}
+QString state(IntentState value){switch(value){case IntentState::known:return"known";case IntentState::omitted:return"omitted";default:return"undecided";}}
+QString reference(ReferenceLine value){switch(value){case ReferenceLine::left:return"left";case ReferenceLine::right:return"right";default:return"center";}}
+Diagnostic failure(std::string code,std::string message,std::string field={}){return {std::move(code),Severity::error,std::move(message),{},std::move(field),"Open a supported valid KaLara JSON document"};}
+struct Reader {
+    std::vector<Diagnostic> errors;
+    void keys(const QJsonObject& object, std::initializer_list<const char*> allowed, const std::string& field) {
+        for (auto it=object.begin(); it!=object.end(); ++it) {
+            bool known=false; for (const auto* key:allowed) if (it.key()==QLatin1String(key)) { known=true; break; }
+            if (!known) errors.push_back(failure("schema.additional_property","Unknown property "+s(it.key()),field+"."+s(it.key())));
+        }
+    }
+    QString text(const QJsonObject& object,const char* key,bool required=true){auto value=object.value(key);if(!value.isString()){if(required)errors.push_back(failure("schema.type",std::string(key)+" must be a string",key));return{};}return value.toString();}
+    double number(const QJsonObject& object,const char* key){auto value=object.value(key);if(!value.isDouble()||!std::isfinite(value.toDouble())){errors.push_back(failure("schema.number",std::string(key)+" must be finite",key));return 0;}return value.toDouble();}
+    int integer(const QJsonObject& object,const char* key){double value=number(object,key);if(std::floor(value)!=value||value<std::numeric_limits<int>::min()||value>std::numeric_limits<int>::max())errors.push_back(failure("schema.integer",std::string(key)+" must be an integer",key));return static_cast<int>(value);}
+    bool boolean(const QJsonObject& object,const char* key){auto value=object.value(key);if(!value.isBool()){errors.push_back(failure("schema.boolean",std::string(key)+" must be a boolean",key));return false;}return value.toBool();}
+    QJsonArray array(const QJsonObject& object,const char* key){auto value=object.value(key);if(!value.isArray()){errors.push_back(failure("schema.array",std::string(key)+" must be an array",key));return{};}return value.toArray();}
+    std::uint64_t revision(const QJsonObject& object,const char* key){double value=number(object,key);if(value<0||std::floor(value)!=value||value>9007199254740991.0)errors.push_back(failure("schema.revision",std::string(key)+" is outside JSON's exact integer range",key));return static_cast<std::uint64_t>(value);}
+    EntityId id(const QJsonObject& object,const char* key){try{return EntityId(s(text(object,key)));}catch(const std::exception& e){errors.push_back(failure("schema.id",e.what(),key));return EntityId("invalid-id");}}
+    geometry::Point2 readPoint(const QJsonValue& value,const char* field){if(!value.isArray()||value.toArray().size()!=2){errors.push_back(failure("schema.point",std::string(field)+" must have two numbers",field));return{};}auto array=value.toArray();try{return {array[0].toDouble(std::numeric_limits<double>::quiet_NaN()),array[1].toDouble(std::numeric_limits<double>::quiet_NaN())};}catch(const std::exception& e){errors.push_back(failure("schema.point",e.what(),field));return{};}}
+    EntityHeader header(const QJsonObject& value,EntityType type){EntityHeader h{id(value,"id"),type,id(value,"ownerId")};if(value.contains("layerId"))h.layerId=id(value,"layerId");h.createdRevision=revision(value,"createdRevision");h.modifiedRevision=revision(value,"modifiedRevision");return h;}
+};
+}
+std::string encodeJson(const Project& project){
+    if(auto diagnostics=validate(project);!diagnostics.empty())throw std::invalid_argument("Cannot encode an invalid project: "+diagnostics.front().message);
+    QJsonObject root{{"format","kalara-arch-project"},{"schemaVersion",project.schemaVersion},{"canonicalUnit","mm"},{"projectId",q(project.id.str())},{"title",q(project.title)},{"revision",static_cast<qint64>(project.revision)}};
+    root["display"]=QJsonObject{{"lengthUnit",unit(project.display.lengthUnit)},{"lengthDecimals",project.display.lengthDecimals}};
+    QJsonObject intent{{"state",state(project.targetAreaSquareMm.state)}};intent["valueSquareMm"]=project.targetAreaSquareMm.value?QJsonValue(*project.targetAreaSquareMm.value):QJsonValue(QJsonValue::Null);root["intent"]=QJsonObject{{"targetArea",intent}};
+    QJsonObject extensions;for(const auto& [key,value]:project.extensions)extensions[q(key)]=q(value);root["extensions"]=extensions;
+    QJsonArray entities;
+    for(const auto& [id,item]:project.entities){QJsonObject value=entityHeader(header(item));std::visit([&](const auto& entity){using T=std::decay_t<decltype(entity)>;
+        if constexpr(std::is_same_v<T,Site>){value["northRadians"]=entity.north.radians;if(entity.boundary){QJsonArray holes;for(const auto& hole:entity.boundary->holes)holes.push_back(ring(hole));value["boundary"]=QJsonObject{{"outer",ring(entity.boundary->outer)},{"holes",holes}};}else value["boundary"]=QJsonValue(QJsonValue::Null);}
+        if constexpr(std::is_same_v<T,Building>){value["name"]=q(entity.name);QJsonArray ids;for(const auto& child:entity.floorIds)ids.push_back(q(child.str()));value["floorIds"]=ids;}
+        if constexpr(std::is_same_v<T,Floor>){value["name"]=q(entity.name);value["order"]=entity.order;value["elevationMm"]=entity.elevation?QJsonValue(entity.elevation->mm):QJsonValue(QJsonValue::Null);QJsonArray ids;for(const auto& child:entity.entityIds)ids.push_back(q(child.str()));value["entityIds"]=ids;}
+        if constexpr(std::is_same_v<T,Layer>){value["name"]=q(entity.name);value["visible"]=entity.visible;value["locked"]=entity.locked;value["printable"]=entity.printable;}
+        if constexpr(std::is_same_v<T,Junction>){value["floorId"]=q(entity.floorId.str());value["position"]=point(entity.position);}
+        if constexpr(std::is_same_v<T,Wall>){value["floorId"]=q(entity.floorId.str());value["startJunctionId"]=q(entity.startJunctionId.str());value["endJunctionId"]=q(entity.endJunctionId.str());value["thicknessMm"]=entity.thickness.mm;value["referenceLine"]=reference(entity.referenceLine);value["sideConvention"]="tangent-left-right";value["wallType"]=q(entity.wallType);}
+    },item);entities.push_back(value);}root["entities"]=entities;
+    return QJsonDocument(root).toJson(QJsonDocument::Indented).toStdString();
+}
+DecodeResult decodeJson(std::string_view json){
+    QJsonParseError parse;const auto document=QJsonDocument::fromJson(QByteArray(json.data(),static_cast<qsizetype>(json.size())),&parse);
+    if(parse.error!=QJsonParseError::NoError)return CodecFailure{{failure("json.parse",s(parse.errorString()))}};
+    if(!document.isObject())return CodecFailure{{failure("schema.root","Project JSON root must be an object")}};
+    Reader reader;const auto root=document.object();
+    reader.keys(root,{"format","schemaVersion","canonicalUnit","projectId","title","revision","display","intent","extensions","entities"},"root");
+    if(reader.text(root,"format")!="kalara-arch-project")reader.errors.push_back(failure("schema.format","Unsupported document format","format"));
+    const int version=reader.integer(root,"schemaVersion");
+    if(version!=Project::currentSchemaVersion)reader.errors.push_back(failure("schema.unsupported","Unsupported schema version","schemaVersion"));
+    if(reader.text(root,"canonicalUnit")!="mm")reader.errors.push_back(failure("schema.unit","Canonical unit must be mm","canonicalUnit"));
+    Project project(reader.id(root,"projectId"));project.schemaVersion=version;project.title=s(reader.text(root,"title"));project.revision=reader.revision(root,"revision");
+    if(!root.value("display").isObject())reader.errors.push_back(failure("schema.object","display must be an object","display"));const auto display=root.value("display").toObject();reader.keys(display,{"lengthUnit","lengthDecimals"},"display");const auto displayUnit=reader.text(display,"lengthUnit");
+    if(displayUnit=="mm")project.display.lengthUnit=LengthDisplayUnit::mm;else if(displayUnit=="cm")project.display.lengthUnit=LengthDisplayUnit::cm;else if(displayUnit=="m")project.display.lengthUnit=LengthDisplayUnit::m;else if(displayUnit=="in")project.display.lengthUnit=LengthDisplayUnit::inch;else if(displayUnit=="ft")project.display.lengthUnit=LengthDisplayUnit::foot;else reader.errors.push_back(failure("schema.enum","Unknown display length unit","display.lengthUnit"));
+    project.display.lengthDecimals=reader.integer(display,"lengthDecimals");
+    if(!root.value("intent").isObject())reader.errors.push_back(failure("schema.object","intent must be an object","intent"));const auto intentObject=root.value("intent").toObject();reader.keys(intentObject,{"targetArea"},"intent");if(!intentObject.value("targetArea").isObject())reader.errors.push_back(failure("schema.object","targetArea must be an object","intent.targetArea"));const auto target=intentObject.value("targetArea").toObject();reader.keys(target,{"state","valueSquareMm"},"intent.targetArea");const auto intentState=reader.text(target,"state");
+    if(intentState=="known")project.targetAreaSquareMm.state=IntentState::known;else if(intentState=="omitted")project.targetAreaSquareMm.state=IntentState::omitted;else if(intentState=="undecided")project.targetAreaSquareMm.state=IntentState::undecided;else reader.errors.push_back(failure("schema.enum","Unknown intent state","intent.targetArea.state"));
+    if(!target.value("valueSquareMm").isNull())project.targetAreaSquareMm.value=reader.number(target,"valueSquareMm");
+    const auto extensionObject=root.value("extensions").toObject();for(auto it=extensionObject.begin();it!=extensionObject.end();++it){if(!it.value().isString())reader.errors.push_back(failure("schema.extension","Extension values must be inert strings","extensions."+s(it.key())));else project.extensions.emplace(s(it.key()),s(it.value().toString()));}
+    const auto entities=root.value("entities");if(!entities.isArray())reader.errors.push_back(failure("schema.entities","entities must be an array","entities"));
+    else for(const auto itemValue:entities.toArray()){
+        if(!itemValue.isObject()){reader.errors.push_back(failure("schema.entity","Each entity must be an object","entities"));continue;}const auto value=itemValue.toObject();const auto type=reader.text(value,"type");
+        try { Entity entity = [&]() -> Entity {
+            if(type=="site"){auto h=reader.header(value,EntityType::site);std::optional<geometry::Polygon2> boundary;if(!value.value("boundary").isNull()){const auto object=value.value("boundary").toObject();geometry::Polygon2 polygon;for(auto p:object.value("outer").toArray())polygon.outer.push_back(reader.readPoint(p,"boundary.outer"));for(auto holeValue:object.value("holes").toArray()){std::vector<geometry::Point2> hole;for(auto p:holeValue.toArray())hole.push_back(reader.readPoint(p,"boundary.holes"));polygon.holes.push_back(std::move(hole));}boundary=std::move(polygon);}return Site{std::move(h),std::move(boundary),geometry::Angle(reader.number(value,"northRadians"))};}
+            if(type=="building"){auto h=reader.header(value,EntityType::building);std::vector<EntityId> ids;for(auto idValue:reader.array(value,"floorIds")){if(!idValue.isString())reader.errors.push_back(failure("schema.id","floorIds entries must be IDs","floorIds"));else ids.emplace_back(s(idValue.toString()));}return Building{std::move(h),s(reader.text(value,"name")),std::move(ids)};}
+            if(type=="floor"){auto h=reader.header(value,EntityType::floor);std::optional<geometry::Length> elevation;if(!value.contains("elevationMm"))reader.errors.push_back(failure("schema.required","elevationMm is required","elevationMm"));else if(!value.value("elevationMm").isNull())elevation=geometry::Length(reader.number(value,"elevationMm"));std::vector<EntityId> ids;for(auto idValue:reader.array(value,"entityIds")){if(!idValue.isString())reader.errors.push_back(failure("schema.id","entityIds entries must be IDs","entityIds"));else ids.emplace_back(s(idValue.toString()));}return Floor{std::move(h),s(reader.text(value,"name")),reader.integer(value,"order"),elevation,std::move(ids)};}
+            if(type=="layer"){return Layer{reader.header(value,EntityType::layer),s(reader.text(value,"name")),reader.boolean(value,"visible"),reader.boolean(value,"locked"),reader.boolean(value,"printable")};}
+            if(type=="junction"){return Junction{reader.header(value,EntityType::junction),reader.id(value,"floorId"),reader.readPoint(value.value("position"),"position")};}
+            if(type=="wall"){auto line=reader.text(value,"referenceLine");ReferenceLine ref=ReferenceLine::center;if(line=="left")ref=ReferenceLine::left;else if(line=="right")ref=ReferenceLine::right;else if(line!="center")reader.errors.push_back(failure("schema.enum","Unknown reference line","referenceLine"));if(reader.text(value,"sideConvention")!="tangent-left-right")reader.errors.push_back(failure("schema.enum","Unknown side convention","sideConvention"));return Wall{reader.header(value,EntityType::wall),reader.id(value,"floorId"),reader.id(value,"startJunctionId"),reader.id(value,"endJunctionId"),geometry::Length(reader.number(value,"thicknessMm")),ref,SideConvention::tangentLeftRight,s(reader.text(value,"wallType"))};}
+            reader.errors.push_back(failure("schema.entity_type","Unknown entity type","entities.type"));return Layer{reader.header(value,EntityType::layer),"invalid"};
+        }(); const auto id=header(entity).id;if(project.entities.contains(id))reader.errors.push_back(failure("entity.duplicate","Duplicate entity ID","entities.id"));else project.entities.emplace(id,std::move(entity)); }
+        catch(const std::exception& e){reader.errors.push_back(failure("schema.entity",e.what(),"entities"));}
+    }
+    auto domain=validate(project);reader.errors.insert(reader.errors.end(),domain.begin(),domain.end());if(!reader.errors.empty())return CodecFailure{std::move(reader.errors)};return project;
+}
+}

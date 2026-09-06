@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kalara.local/schema/project-v1.json",
+  "title": "KaLara Arch project JSON v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "schemaVersion", "canonicalUnit", "projectId", "title", "revision", "display", "intent", "extensions", "entities"],
+  "properties": {
+    "format": {"const": "kalara-arch-project"},
+    "schemaVersion": {"const": 1},
+    "canonicalUnit": {"const": "mm"},
+    "projectId": {"$ref": "#/$defs/id"},
+    "title": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
+    "display": {"type":"object", "additionalProperties":false, "required":["lengthUnit","lengthDecimals"], "properties":{"lengthUnit":{"enum":["mm","cm","m","in","ft"]},"lengthDecimals":{"type":"integer","minimum":0,"maximum":9}}},
+    "intent": {"type":"object", "additionalProperties":false, "required":["targetArea"], "properties":{"targetArea":{"oneOf":[{"type":"object","additionalProperties":false,"required":["state","valueSquareMm"],"properties":{"state":{"const":"known"},"valueSquareMm":{"type":"number","minimum":0}}},{"type":"object","additionalProperties":false,"required":["state","valueSquareMm"],"properties":{"state":{"enum":["undecided","omitted"]},"valueSquareMm":{"type":"null"}}}]}}},
+    "extensions": {"type":"object", "additionalProperties":{"type":"string"}},
+    "entities": {"type":"array", "items":{"oneOf":[{"$ref":"#/$defs/site"},{"$ref":"#/$defs/building"},{"$ref":"#/$defs/floor"},{"$ref":"#/$defs/layer"},{"$ref":"#/$defs/junction"},{"$ref":"#/$defs/wall"}]}}
+  },
+  "$defs": {
+    "id": {"type":"string","minLength":1,"maxLength":128,"pattern":"^[A-Za-z0-9_.-]+$"},
+    "point": {"type":"array","prefixItems":[{"type":"number","minimum":-10000000,"maximum":10000000},{"type":"number","minimum":-10000000,"maximum":10000000}],"items":false},
+    "header": {"type":"object","required":["id","type","ownerId","createdRevision","modifiedRevision"],"properties":{"id":{"$ref":"#/$defs/id"},"ownerId":{"$ref":"#/$defs/id"},"layerId":{"$ref":"#/$defs/id"},"createdRevision":{"type":"integer","minimum":0},"modifiedRevision":{"type":"integer","minimum":0}}},
+    "site": {"allOf":[{"$ref":"#/$defs/header"},{"type":"object","required":["type","northRadians","boundary"],"properties":{"type":{"const":"site"},"northRadians":{"type":"number"},"boundary":{"type":["object","null"]}}}]},
+    "building": {"allOf":[{"$ref":"#/$defs/header"},{"type":"object","required":["type","name","floorIds"],"properties":{"type":{"const":"building"},"name":{"type":"string"},"floorIds":{"type":"array","items":{"$ref":"#/$defs/id"}}}}]},
+    "floor": {"allOf":[{"$ref":"#/$defs/header"},{"type":"object","required":["type","name","order","elevationMm","entityIds"],"properties":{"type":{"const":"floor"},"name":{"type":"string"},"order":{"type":"integer"},"elevationMm":{"type":["number","null"]},"entityIds":{"type":"array","items":{"$ref":"#/$defs/id"}}}}]},
+    "layer": {"allOf":[{"$ref":"#/$defs/header"},{"type":"object","required":["type","name","visible","locked","printable"],"properties":{"type":{"const":"layer"},"name":{"type":"string"},"visible":{"type":"boolean"},"locked":{"type":"boolean"},"printable":{"type":"boolean"}}}]},
+    "junction": {"allOf":[{"$ref":"#/$defs/header"},{"type":"object","required":["type","floorId","position"],"properties":{"type":{"const":"junction"},"floorId":{"$ref":"#/$defs/id"},"position":{"$ref":"#/$defs/point"}}}]},
+    "wall": {"allOf":[{"$ref":"#/$defs/header"},{"type":"object","required":["type","floorId","startJunctionId","endJunctionId","thicknessMm","referenceLine","sideConvention","wallType"],"properties":{"type":{"const":"wall"},"floorId":{"$ref":"#/$defs/id"},"startJunctionId":{"$ref":"#/$defs/id"},"endJunctionId":{"$ref":"#/$defs/id"},"thicknessMm":{"type":"number","exclusiveMinimum":0},"referenceLine":{"enum":["center","left","right"]},"sideConvention":{"const":"tangent-left-right"},"wallType":{"type":"string"}}}]}
+  }
+}

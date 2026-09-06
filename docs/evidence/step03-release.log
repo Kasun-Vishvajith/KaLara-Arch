@@ -1,0 +1,31 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (0.9s)
+-- Generating done (0.6s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+[1/20] Automatic MOC for target kalara_editor
+[2/18] Automatic MOC for target kalara_arch
+[3/16] Automatic MOC for target shell_tests
+[4/14] Building CXX object CMakeFiles\kalara_architecture.dir\architecture\model.cpp.obj
+[5/14] Linking CXX static library kalara_architecture.lib
+[6/14] Automatic MOC for target kalara_persistence
+[7/14] Building CXX object CMakeFiles\kalara_persistence.dir\kalara_persistence_autogen\mocs_compilation.cpp.obj
+[8/14] Building CXX object CMakeFiles\kalara_persistence.dir\persistence\migration.cpp.obj
+[9/14] Building CXX object CMakeFiles\kalara_persistence.dir\persistence\json_codec.cpp.obj
+[10/14] Linking CXX static library kalara_persistence.lib
+[11/14] Automatic MOC for target model_codec_tests
+[12/14] Building CXX object CMakeFiles\model_codec_tests.dir\model_codec_tests_autogen\mocs_compilation.cpp.obj
+[13/14] Building CXX object CMakeFiles\model_codec_tests.dir\tests\model_codec_tests.cpp.obj
+[14/14] Linking CXX executable model_codec_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+    Start 1: core_tests
+1/4 Test #1: core_tests .......................   Passed    0.09 sec
+    Start 2: geometry_tests
+2/4 Test #2: geometry_tests ...................   Passed    0.10 sec
+    Start 3: model_codec_tests
+3/4 Test #3: model_codec_tests ................   Passed    0.16 sec
+    Start 4: shell_tests
+4/4 Test #4: shell_tests ......................   Passed    0.41 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   1.19 sec

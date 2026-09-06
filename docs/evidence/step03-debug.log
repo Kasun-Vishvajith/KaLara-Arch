@@ -1,0 +1,20 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (1.0s)
+-- Generating done (0.5s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+[1/4] Automatic MOC for target model_codec_tests
+[2/3] Building CXX object CMakeFiles\model_codec_tests.dir\tests\model_codec_tests.cpp.obj
+[3/3] Linking CXX executable model_codec_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+    Start 1: core_tests
+1/4 Test #1: core_tests .......................   Passed    0.05 sec
+    Start 2: geometry_tests
+2/4 Test #2: geometry_tests ...................   Passed    0.07 sec
+    Start 3: model_codec_tests
+3/4 Test #3: model_codec_tests ................   Passed    0.20 sec
+    Start 4: shell_tests
+4/4 Test #4: shell_tests ......................   Passed    2.12 sec
+
+100% tests passed out of 4
+
+Total Test time (real) =   2.56 sec

@@ -1,27 +1,27 @@
 # Implementation progress
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
-**Current step:** 03 — IN PROGRESS.
-**Implementation status:** Steps 00–02 verified: native foundation and numerical geometry; drafting/model features remain missing.
+**Current step:** 04 — IN PROGRESS.
+**Implementation status:** Steps 00–03 verified: native foundation, numerical geometry, and typed model/JSON codec; authoring remains missing.
 **Baseline repository:** 868dc8b; no tracked application source.
-**Last verified build/test:** Step 02 core CTest 2/2, geometry 1064 checks, release CTest 3/3; Step 01 native shell 5 PASS.
+**Last verified build/test:** Step 03 debug/release CTest 4/4; model/JSON 24 checks; independent core CTest 2/2.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Implement Step 03 typed model, validated deterministic JSON, schema and fixtures.
+Implement Step 04 ProjectStore snapshots, atomic ChangePlans, history, dirty tracking, dependency hooks, and failure injection.
 
 ## Session handoff — update after each run
 
-- Active step and status: Step 03 IN PROGRESS.
-- Latest implementation commit: Step 02 commit follows 3e1c154; use git log.
-- Changes actually implemented: CMake presets, diagnostics/logger, per-document sessions, action registry, themed shell, docks and reset.
-- Tests actually run and results: independent core 1/1, debug CTest 2/2, native shell 5 PASS.
+- Active step and status: Step 04 IN PROGRESS.
+- Latest implementation commit: Step 03 commit follows 30a4357; use git log.
+- Changes actually implemented: typed project/entities/references, validation, deterministic JSON codec/schema, v1 migration entry.
+- Tests actually run and results: Step 03 debug/release 4/4, model/JSON 24 checks, independent core 2/2.
 - Windows UI evidence: docs/evidence/step01-native.txt and captures.
 - Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: Step 03 model and JSON schema fixtures.
-- Relevant specification/ADR: docs/03_MODEL_AND_SCHEMA.md and docs/12_PROJECTS_AND_RECOVERY.md.
+- Next concrete action: Step 04 command transaction and history fixtures.
+- Relevant specification/ADR: docs/04_COMMANDS_AND_HISTORY.md.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 
 ## Step ledger
@@ -31,8 +31,8 @@ Implement Step 03 typed model, validated deterministic JSON, schema and fixtures
 | 00 — Environment and baseline audit | PASS | [STEP_00](evidence/STEP_00.md) |
 | 01 — Layered application foundation | PASS | [STEP_01](evidence/STEP_01.md) |
 | 02 — Units and robust 2D geometry | PASS | [STEP_02](evidence/STEP_02.md) |
-| 03 — Model identity and early serialization | IN PROGRESS | Pending |
-| 04 — Transactions and undo before authoring | NOT STARTED | Pending |
+| 03 — Model identity and early serialization | PASS | [STEP_03](evidence/STEP_03.md) |
+| 04 — Transactions and undo before authoring | IN PROGRESS | Pending |
 | 05 — Smooth 2D viewport and instrumentation | NOT STARTED | Pending |
 | 06 — Selection, tool lifecycle, and snapping | NOT STARTED | Pending |
 | 07 — Architectural wall authoring | NOT STARTED | Pending |

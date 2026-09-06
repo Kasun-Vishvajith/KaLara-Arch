@@ -1,0 +1,110 @@
+{
+    "canonicalUnit": "mm",
+    "display": {
+        "lengthDecimals": 2,
+        "lengthUnit": "mm"
+    },
+    "entities": [
+        {
+            "createdRevision": 1,
+            "floorIds": [
+                "floor-ground"
+            ],
+            "id": "building-a",
+            "modifiedRevision": 7,
+            "name": "Main",
+            "ownerId": "project-fixture",
+            "type": "building"
+        },
+        {
+            "createdRevision": 1,
+            "elevationMm": null,
+            "entityIds": [
+                "junction-a",
+                "junction-b",
+                "wall-a"
+            ],
+            "id": "floor-ground",
+            "modifiedRevision": 7,
+            "name": "Ground",
+            "order": 0,
+            "ownerId": "building-a",
+            "type": "floor"
+        },
+        {
+            "createdRevision": 1,
+            "floorId": "floor-ground",
+            "id": "junction-a",
+            "layerId": "layer-walls",
+            "modifiedRevision": 7,
+            "ownerId": "floor-ground",
+            "position": [
+                0,
+                0
+            ],
+            "type": "junction"
+        },
+        {
+            "createdRevision": 1,
+            "floorId": "floor-ground",
+            "id": "junction-b",
+            "layerId": "layer-walls",
+            "modifiedRevision": 7,
+            "ownerId": "floor-ground",
+            "position": [
+                6000.125,
+                0
+            ],
+            "type": "junction"
+        },
+        {
+            "createdRevision": 1,
+            "id": "layer-walls",
+            "locked": false,
+            "modifiedRevision": 7,
+            "name": "Walls",
+            "ownerId": "project-fixture",
+            "printable": true,
+            "type": "layer",
+            "visible": true
+        },
+        {
+            "boundary": null,
+            "createdRevision": 1,
+            "id": "site-a",
+            "modifiedRevision": 7,
+            "northRadians": 0.2,
+            "ownerId": "project-fixture",
+            "type": "site"
+        },
+        {
+            "createdRevision": 1,
+            "endJunctionId": "junction-b",
+            "floorId": "floor-ground",
+            "id": "wall-a",
+            "layerId": "layer-walls",
+            "modifiedRevision": 7,
+            "ownerId": "floor-ground",
+            "referenceLine": "center",
+            "sideConvention": "tangent-left-right",
+            "startJunctionId": "junction-a",
+            "thicknessMm": 200,
+            "type": "wall",
+            "wallType": "generic-200"
+        }
+    ],
+    "extensions": {
+        "example.vendor.note": "preserve me; never execute"
+    },
+    "format": "kalara-arch-project",
+    "intent": {
+        "targetArea": {
+            "state": "undecided",
+            "valueSquareMm": null
+        }
+    },
+    "projectId": "project-fixture",
+    "revision": 7,
+    "schemaVersion": 1,
+    "title": "KaLara café Ω"
+}

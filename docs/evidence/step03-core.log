@@ -1,0 +1,14 @@
+-- Configuring done (0.4s)
+-- Generating done (0.2s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/core-tests
+[1/2] Building CXX object CMakeFiles\kalara_architecture.dir\architecture\model.cpp.obj
+[2/2] Linking CXX static library kalara_architecture.lib
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/core-tests
+    Start 1: core_tests
+1/2 Test #1: core_tests .......................   Passed    0.11 sec
+    Start 2: geometry_tests
+2/2 Test #2: geometry_tests ...................   Passed    0.12 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.47 sec
