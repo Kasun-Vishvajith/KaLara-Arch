@@ -1,0 +1,20 @@
+-- The CXX compiler identification is MSVC 19.44.35228.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (3.9s)
+-- Generating done (0.2s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/core-tests
+[1/4] Building CXX object CMakeFiles\kalara_core.dir\core\diagnostic.cpp.obj
+[2/4] Linking CXX static library kalara_core.lib
+[3/4] Building CXX object CMakeFiles\core_tests.dir\tests\core_tests.cpp.obj
+[4/4] Linking CXX executable core_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/core-tests
+    Start 1: core_tests
+1/1 Test #1: core_tests .......................   Passed    0.11 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.27 sec

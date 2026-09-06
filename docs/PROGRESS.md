@@ -1,36 +1,36 @@
 # Implementation progress
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
-**Current step:** 01 — IN PROGRESS.
-**Implementation status:** Step 00 native environment probes verified. Application implementation starts at Step 01.
+**Current step:** 02 — IN PROGRESS.
+**Implementation status:** Steps 00–01 verified: native toolchain and usable desktop foundation; drafting features remain missing.
 **Baseline repository:** 868dc8b; no tracked application source.
-**Last verified build/test:** Step 00 MSVC/Qt native compile, CTest 1/1 PASS, native Qt window capture inspected.
+**Last verified build/test:** Step 01 debug CTest 2/2, independent core 1/1, native shell tests 5 PASS.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Implement Step 01 shell, per-document ownership, registry, structured errors/logging and layout persistence/reset; verify Qt-free core independently.
+Implement Step 02 typed units, parser/formatter and robust geometry. See evidence/STEP_01.md for visual and release-rebuild limitations.
 
 ## Session handoff — update after each run
 
-- Active step and status:
-- Latest implementation commit:
-- Changes actually implemented:
-- Tests actually run and results:
-- Windows UI evidence:
-- Open defects/blockers:
-- Files with uncommitted user changes:
-- Next concrete action:
-- Relevant specification/ADR:
-- User-selected workflow changes:
+- Active step and status: Step 02 IN PROGRESS.
+- Latest implementation commit: Step 01 commit follows 79148fa; use git log.
+- Changes actually implemented: CMake presets, diagnostics/logger, per-document sessions, action registry, themed shell, docks and reset.
+- Tests actually run and results: independent core 1/1, debug CTest 2/2, native shell 5 PASS.
+- Windows UI evidence: docs/evidence/step01-native.txt and captures.
+- Open defects/blockers: larger native capture constrained by display; final release rebuild pending.
+- Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
+- Next concrete action: Step 02 geometry numerical fixtures.
+- Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md.
+- User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 
 ## Step ledger
 
 | Step | Status | Evidence |
 |---|---|---|
 | 00 — Environment and baseline audit | PASS | [STEP_00](evidence/STEP_00.md) |
-| 01 — Layered application foundation | IN PROGRESS | Pending |
-| 02 — Units and robust 2D geometry | NOT STARTED | Pending |
+| 01 — Layered application foundation | PASS | [STEP_01](evidence/STEP_01.md) |
+| 02 — Units and robust 2D geometry | IN PROGRESS | Pending |
 | 03 — Model identity and early serialization | NOT STARTED | Pending |
 | 04 — Transactions and undo before authoring | NOT STARTED | Pending |
 | 05 — Smooth 2D viewport and instrumentation | NOT STARTED | Pending |
@@ -55,4 +55,5 @@ Implement Step 01 shell, per-document ownership, registry, structured errors/log
 | 24 — Performance and stability hardening | NOT STARTED | Pending |
 | 25 — Windows distribution and offline validation | NOT STARTED | Pending |
 | 26 — LOCAL_2D_RELEASE_GATE | NOT STARTED | Pending |
+
 

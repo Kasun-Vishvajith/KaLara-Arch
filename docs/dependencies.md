@@ -14,3 +14,7 @@ Observed 2026-09-06; local installed toolchain retained. No downloads performed.
 | Probe test | Repository-owned environment-v1 source | Apache-2.0; CTest orchestration; no third-party framework | In repository |
 
 JSON, polygon operations, archive, full test framework and installer dependencies remain UNSELECTED. They must be pinned and their licenses recorded before their corresponding feature builds can pass. The probe does not use these dependencies. Application-owned code targets Apache-2.0; this does not relicense the installed Qt binaries. Distribution license/notice gate remains NOT RUN.
+
+## Step 01 additions
+
+Qt Test 6.7.2 from the same shared kit is the pinned development-only widget test framework. Core uses repository-owned tests run by CTest; no third-party dependency. No Qt headers or linkage enter kalara_core. Editor depends on core and Qt Widgets; model/runtime/render/adapters will be introduced as implemented in later steps, without empty targets standing in for features.
