@@ -1,0 +1,47 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (1.1s)
+-- Generating done (0.6s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+[1/29] Automatic MOC for target kalara_persistence
+[2/27] Automatic MOC for target model_codec_tests
+[3/25] Building CXX object CMakeFiles\kalara_render.dir\render\camera.cpp.obj
+[4/25] Building CXX object CMakeFiles\kalara_render.dir\render\frame_recorder.cpp.obj
+[5/25] Building CXX object CMakeFiles\kalara_render.dir\render\scene.cpp.obj
+[6/25] Linking CXX static library kalara_render.lib
+[7/25] Automatic MOC for target kalara_editor
+[8/25] Building CXX object CMakeFiles\kalara_editor.dir\editor\action_registry.cpp.obj
+[9/25] Building CXX object CMakeFiles\kalara_editor.dir\editor\session.cpp.obj
+[10/25] Building CXX object CMakeFiles\kalara_editor.dir\kalara_editor_autogen\mocs_compilation.cpp.obj
+[11/25] Building CXX object CMakeFiles\kalara_editor.dir\editor\plan_viewport.cpp.obj
+[12/25] Building CXX object CMakeFiles\kalara_editor.dir\editor\main_window.cpp.obj
+[13/25] Linking CXX static library kalara_editor.lib
+[14/25] Automatic MOC for target kalara_arch
+[15/25] Building CXX object CMakeFiles\kalara_arch.dir\kalara_arch_autogen\mocs_compilation.cpp.obj
+[16/25] Automatic MOC for target render_tests
+[17/25] Automatic MOC for target shell_tests
+[18/25] Building CXX object CMakeFiles\render_tests.dir\render_tests_autogen\mocs_compilation.cpp.obj
+[19/25] Building CXX object CMakeFiles\shell_tests.dir\shell_tests_autogen\mocs_compilation.cpp.obj
+[20/25] Building CXX object CMakeFiles\kalara_arch.dir\editor\main.cpp.obj
+[21/25] Linking CXX executable kalara_arch.exe
+[22/25] Building CXX object CMakeFiles\shell_tests.dir\tests\shell_tests.cpp.obj
+[23/25] Building CXX object CMakeFiles\render_tests.dir\tests\render_tests.cpp.obj
+[24/25] Linking CXX executable shell_tests.exe
+[25/25] Linking CXX executable render_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+    Start 1: core_tests
+1/6 Test #1: core_tests .......................   Passed    0.24 sec
+    Start 2: geometry_tests
+2/6 Test #2: geometry_tests ...................   Passed    0.15 sec
+    Start 3: command_service_tests
+3/6 Test #3: command_service_tests ............   Passed    0.27 sec
+    Start 4: model_codec_tests
+4/6 Test #4: model_codec_tests ................   Passed    0.18 sec
+    Start 5: shell_tests
+5/6 Test #5: shell_tests ......................   Passed    0.50 sec
+    Start 6: render_tests
+6/6 Test #6: render_tests .....................   Passed    0.92 sec
+
+100% tests passed out of 6
+
+Total Test time (real) =   2.48 sec

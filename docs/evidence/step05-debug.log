@@ -1,0 +1,32 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (1.0s)
+-- Generating done (0.6s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+[1/13] Automatic MOC for target kalara_editor
+[2/12] Building CXX object CMakeFiles\kalara_editor.dir\editor\plan_viewport.cpp.obj
+[3/12] Linking CXX static library kalara_editor.lib
+[4/12] Linking CXX executable kalara_arch.exe
+[5/12] Automatic MOC for target render_tests
+[6/11] Automatic MOC for target shell_tests
+[7/10] Building CXX object CMakeFiles\render_tests.dir\tests\render_tests.cpp.obj
+[8/10] Building CXX object CMakeFiles\shell_tests.dir\tests\shell_tests.cpp.obj
+[9/10] Linking CXX executable shell_tests.exe
+[10/10] Linking CXX executable render_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+    Start 1: core_tests
+1/6 Test #1: core_tests .......................   Passed    0.06 sec
+    Start 2: geometry_tests
+2/6 Test #2: geometry_tests ...................   Passed    0.09 sec
+    Start 3: command_service_tests
+3/6 Test #3: command_service_tests ............   Passed    0.07 sec
+    Start 4: model_codec_tests
+4/6 Test #4: model_codec_tests ................   Passed    0.15 sec
+    Start 5: shell_tests
+5/6 Test #5: shell_tests ......................   Passed    2.35 sec
+    Start 6: render_tests
+6/6 Test #6: render_tests .....................   Passed    1.68 sec
+
+100% tests passed out of 6
+
+Total Test time (real) =   4.74 sec

@@ -1,4 +1,6 @@
 #include "editor/main_window.h"
+#include "editor/plan_viewport.h"
+#include "render/scene.h"
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDialog>
@@ -64,6 +66,9 @@ MainWindow::MainWindow(const QString& settingsFile)
     view->addAction(add("view.inspector", "Show/hide &Inspector", {}, "document-properties", [this] { inspector_->setVisible(!inspector_->isVisible()); }));
     view->addAction(add("view.reset", "&Reset Workspace", {}, "view-restore", [this] { resetWorkspace(); }));
     view->addAction(add("view.theme", "Toggle light/&dark theme", {}, "preferences-desktop-theme", [this] { setDark(!dark_); }));
+    view->addAction(add("view.fit", "&Fit plan", QKeySequence("Ctrl+0"), "zoom-fit-best", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->fitScene(); }));
+    auto* fallback=add("view.painter", "Use &Painter fallback", {}, "video-display", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->setRendererMode(registry_.get("view.painter")->isChecked()?RendererMode::painter:RendererMode::gpu); });
+    fallback->setCheckable(true);
     auto* tools = menuBar()->addMenu("&Tools");
     tools->addAction(add("tools.search", "&Find command…", QKeySequence("Ctrl+Shift+P"), "edit-find", [this] { commandSearch(); }));
     auto* help = menuBar()->addMenu("&Help");
@@ -91,13 +96,13 @@ MainWindow::MainWindow(const QString& settingsFile)
 MainWindow::~MainWindow() = default;
 void MainWindow::newDocument() {
     auto session = std::make_unique<DocumentSession>(QString("Untitled %1").arg(nextDocument_++));
-    auto* page = new QWidget;
-    page->setObjectName("planCanvas");
+    auto* page = new PlanViewport;
+    page->setObjectName("planViewport");
     page->setAccessibleName("Empty plan canvas");
-    auto* layout = new QVBoxLayout(page);
-    auto* label = new QLabel("Empty plan", page);
-    label->setAlignment(Qt::AlignCenter);
-    layout->addWidget(label);
+    const render::SceneBuilder builder;
+    const auto snapshot=session->projectStore().snapshot();
+    page->setScene(builder.build(*snapshot,{{{-100000,-100000},{100000,100000}},std::nullopt}));
+    connect(page,&PlanViewport::cameraChanged,this,[this,page]{statusBar()->showMessage(QString("Ready · millimetres · %1% · %2 renderer").arg(qRound(page->camera().pixelsPerMm*1000)).arg(page->activeMode()==RendererMode::gpu?"GPU":"Painter"));});
     const auto title = session->title;
     connect(session.get(), &DocumentSession::selectionChanged, this, &MainWindow::updateSession);
     sessions_.push_back(std::move(session));
@@ -144,7 +149,7 @@ void MainWindow::setDark(bool dark) {
     const QString divider = dark ? "#394352" : "#D9DFE7";
     setStyleSheet(QString("QWidget {color:%1; background:%2; font-family:'Segoe UI'; font-size:14px;}"
         "QDockWidget > QWidget, QMenu, QLineEdit, QListWidget {background:%3;}"
-        "QWidget#planCanvas, QWidget#planCanvas QLabel {background:%4;}"
+        "QWidget#planViewport, QWidget#planViewport QLabel {background:%4;}"
         "QMenuBar::item, QMenu::item {padding:8px 12px;} QMenu::item:selected {background:#2563EB; color:white;}"
         "QDockWidget::title {padding:10px; border-bottom:1px solid %5;}"
         "QTabBar::tab {padding:10px 16px;} QTabBar::tab:selected {border-bottom:2px solid #2563EB;}"
