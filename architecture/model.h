@@ -66,4 +66,7 @@ const EntityHeader& header(const Entity& entity);
 std::string_view entityTypeName(EntityType type);
 std::vector<Diagnostic> validate(const Project& project);
 bool semanticallyEqual(const Project& first, const Project& second);
+bool entitySemanticallyEqual(const Entity& first, const Entity& second);
+// Ignores project/entity revision metadata while comparing persistent content.
+bool semanticContentEqual(const Project& first, const Project& second);
 }

@@ -1,0 +1,1 @@
+commands-v1: 141 checks PASS; committed events=7; undo restores IDs; injected member failure rolled back

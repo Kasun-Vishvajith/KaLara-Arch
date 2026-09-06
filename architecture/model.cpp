@@ -100,4 +100,11 @@ bool semanticallyEqual(const Project& a,const Project& b){
     if(a.schemaVersion!=b.schemaVersion||a.id!=b.id||a.title!=b.title||a.revision!=b.revision||a.display.lengthUnit!=b.display.lengthUnit||a.display.lengthDecimals!=b.display.lengthDecimals||a.targetAreaSquareMm.state!=b.targetAreaSquareMm.state||a.targetAreaSquareMm.value!=b.targetAreaSquareMm.value||a.extensions!=b.extensions||a.entities.size()!=b.entities.size())return false;
     auto left=a.entities.begin(),right=b.entities.begin();for(;left!=a.entities.end();++left,++right)if(left->first!=right->first||!equalEntity(left->second,right->second))return false;return true;
 }
+bool entitySemanticallyEqual(const Entity& first,const Entity& second){return equalEntity(first,second);}
+bool semanticContentEqual(const Project& first,const Project& second){
+    Project a=first,b=second;a.revision=b.revision=0;
+    for(auto& [id,entity]:a.entities){auto& value=const_cast<EntityHeader&>(header(entity));value.createdRevision=value.modifiedRevision=0;}
+    for(auto& [id,entity]:b.entities){auto& value=const_cast<EntityHeader&>(header(entity));value.createdRevision=value.modifiedRevision=0;}
+    return semanticallyEqual(a,b);
+}
 }
