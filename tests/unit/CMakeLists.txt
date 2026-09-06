@@ -238,5 +238,20 @@ target_link_libraries(test_workflow_validation PRIVATE
 target_compile_features(test_workflow_validation PRIVATE cxx_std_20)
 add_test(NAME workflow_validation_test COMMAND test_workflow_validation)
 
+add_executable(test_system_integration
+    test_system_integration.cpp
+)
+
+target_link_libraries(test_system_integration PRIVATE
+    kalara_exporters
+    kalara_runtime
+    kalara_architecture
+    kalara_core
+    Qt6::Gui
+)
+
+target_compile_features(test_system_integration PRIVATE cxx_std_20)
+add_test(NAME system_integration_test COMMAND test_system_integration)
+
 
 
