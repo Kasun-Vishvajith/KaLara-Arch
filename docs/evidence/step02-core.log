@@ -1,0 +1,17 @@
+-- Configuring done (0.3s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/core-tests
+[1/5] Building CXX object CMakeFiles\geometry_tests.dir\tests\geometry_tests.cpp.obj
+[2/5] Building CXX object CMakeFiles\kalara_core.dir\core\geometry.cpp.obj
+[3/5] Linking CXX static library kalara_core.lib
+[4/5] Linking CXX executable core_tests.exe
+[5/5] Linking CXX executable geometry_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/core-tests
+    Start 1: core_tests
+1/2 Test #1: core_tests .......................   Passed    0.11 sec
+    Start 2: geometry_tests
+2/2 Test #2: geometry_tests ...................   Passed    0.12 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.57 sec

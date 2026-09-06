@@ -1,0 +1,28 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (1.1s)
+-- Generating done (0.4s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+[1/16] Building CXX object CMakeFiles\geometry_tests.dir\tests\geometry_tests.cpp.obj
+[2/16] Building CXX object CMakeFiles\kalara_core.dir\core\geometry.cpp.obj
+[3/16] Linking CXX static library kalara_core.lib
+[4/16] Automatic MOC for target kalara_editor
+[5/15] Linking CXX executable core_tests.exe
+[6/15] Linking CXX executable geometry_tests.exe
+[7/15] Building CXX object CMakeFiles\kalara_editor.dir\editor\main_window.cpp.obj
+[8/15] Linking CXX static library kalara_editor.lib
+[9/15] Automatic MOC for target kalara_arch
+[10/14] Linking CXX executable kalara_arch.exe
+[11/14] Automatic MOC for target shell_tests
+[12/13] Building CXX object CMakeFiles\shell_tests.dir\tests\shell_tests.cpp.obj
+[13/13] Linking CXX executable shell_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+    Start 1: core_tests
+1/3 Test #1: core_tests .......................   Passed    0.09 sec
+    Start 2: geometry_tests
+2/3 Test #2: geometry_tests ...................   Passed    0.09 sec
+    Start 3: shell_tests
+3/3 Test #3: shell_tests ......................   Passed    0.40 sec
+
+100% tests passed out of 3
+
+Total Test time (real) =   0.90 sec

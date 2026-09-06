@@ -1,0 +1,1 @@
+geometry-v1: 1064 numerical checks PASS; diagonal=5000 mm; inner area=22040000 mm2; inner perimeter=19200 mm

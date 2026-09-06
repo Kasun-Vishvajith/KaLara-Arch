@@ -1,27 +1,27 @@
 # Implementation progress
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
-**Current step:** 02 — IN PROGRESS.
-**Implementation status:** Steps 00–01 verified: native toolchain and usable desktop foundation; drafting features remain missing.
+**Current step:** 03 — IN PROGRESS.
+**Implementation status:** Steps 00–02 verified: native foundation and numerical geometry; drafting/model features remain missing.
 **Baseline repository:** 868dc8b; no tracked application source.
-**Last verified build/test:** Step 01 debug CTest 2/2, independent core 1/1, native shell tests 5 PASS.
+**Last verified build/test:** Step 02 core CTest 2/2, geometry 1064 checks, release CTest 3/3; Step 01 native shell 5 PASS.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Implement Step 02 typed units, parser/formatter and robust geometry. See evidence/STEP_01.md for visual and release-rebuild limitations.
+Implement Step 03 typed model, validated deterministic JSON, schema and fixtures.
 
 ## Session handoff — update after each run
 
-- Active step and status: Step 02 IN PROGRESS.
-- Latest implementation commit: Step 01 commit follows 79148fa; use git log.
+- Active step and status: Step 03 IN PROGRESS.
+- Latest implementation commit: Step 02 commit follows 3e1c154; use git log.
 - Changes actually implemented: CMake presets, diagnostics/logger, per-document sessions, action registry, themed shell, docks and reset.
 - Tests actually run and results: independent core 1/1, debug CTest 2/2, native shell 5 PASS.
 - Windows UI evidence: docs/evidence/step01-native.txt and captures.
-- Open defects/blockers: larger native capture constrained by display; final release rebuild pending.
+- Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: Step 02 geometry numerical fixtures.
-- Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md.
+- Next concrete action: Step 03 model and JSON schema fixtures.
+- Relevant specification/ADR: docs/03_MODEL_AND_SCHEMA.md and docs/12_PROJECTS_AND_RECOVERY.md.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 
 ## Step ledger
@@ -30,8 +30,8 @@ Implement Step 02 typed units, parser/formatter and robust geometry. See evidenc
 |---|---|---|
 | 00 — Environment and baseline audit | PASS | [STEP_00](evidence/STEP_00.md) |
 | 01 — Layered application foundation | PASS | [STEP_01](evidence/STEP_01.md) |
-| 02 — Units and robust 2D geometry | IN PROGRESS | Pending |
-| 03 — Model identity and early serialization | NOT STARTED | Pending |
+| 02 — Units and robust 2D geometry | PASS | [STEP_02](evidence/STEP_02.md) |
+| 03 — Model identity and early serialization | IN PROGRESS | Pending |
 | 04 — Transactions and undo before authoring | NOT STARTED | Pending |
 | 05 — Smooth 2D viewport and instrumentation | NOT STARTED | Pending |
 | 06 — Selection, tool lifecycle, and snapping | NOT STARTED | Pending |
@@ -55,5 +55,6 @@ Implement Step 02 typed units, parser/formatter and robust geometry. See evidenc
 | 24 — Performance and stability hardening | NOT STARTED | Pending |
 | 25 — Windows distribution and offline validation | NOT STARTED | Pending |
 | 26 — LOCAL_2D_RELEASE_GATE | NOT STARTED | Pending |
+
 
 
