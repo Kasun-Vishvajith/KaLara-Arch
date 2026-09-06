@@ -15,6 +15,7 @@
 #include <QMenuBar>
 #include <QMenu>
 #include <QAction>
+#include <QActionGroup>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -118,7 +119,66 @@ void MainWindow::setupUI() {
 
     m_viewport = new ViewportWidget(this);
     m_viewport->setProject(m_project.get());
+    m_viewport->setEditState(&m_editState);   // S20-A: share EditState
     setCentralWidget(m_viewport);
+
+    // =========================================================================
+    // S20-A: Left Tool Rail (Arcada §3.1 / Part 2 #1 — vertical icon/tool strip)
+    // =========================================================================
+    auto* toolBar = new QToolBar("Architectural Tools", this);
+    toolBar->setMovable(false);
+    toolBar->setToolButtonStyle(Qt::ToolButtonTextOnly);
+    toolBar->setOrientation(Qt::Vertical);
+    addToolBar(Qt::LeftToolBarArea, toolBar);
+
+    // Exclusive action group: only one tool active at a time (Arcada: resetTools on setTool)
+    auto* toolGroup = new QActionGroup(this);
+    toolGroup->setExclusive(true);
+
+    m_toolSelect = toolGroup->addAction("▶  Select");
+    m_toolSelect->setCheckable(true);
+    m_toolSelect->setChecked(true); // default tool
+    m_toolSelect->setToolTip("Select (V)  —  Click to select · Drag to move · Shift/Ctrl for multi-select");
+    toolBar->addAction(m_toolSelect);
+
+    m_toolDrawWall = toolGroup->addAction("╔  Draw Wall");
+    m_toolDrawWall->setCheckable(true);
+    m_toolDrawWall->setToolTip("Draw Wall (W)  —  Click to place nodes · Double-click or Esc to end chain");
+    toolBar->addAction(m_toolDrawWall);
+
+    m_toolAddDoor = toolGroup->addAction("▭  Add Door");
+    m_toolAddDoor->setCheckable(true);
+    m_toolAddDoor->setToolTip("Add Door (D)  —  Click on a wall to insert a door · Right-click to flip orientation");
+    toolBar->addAction(m_toolAddDoor);
+
+    m_toolAddWindow = toolGroup->addAction("□  Add Window");
+    m_toolAddWindow->setCheckable(true);
+    m_toolAddWindow->setToolTip("Add Window (I)  —  Click on a wall to insert a window · Right-click to flip orientation");
+    toolBar->addAction(m_toolAddWindow);
+
+    m_toolMeasure = toolGroup->addAction("⟷  Measure");
+    m_toolMeasure->setCheckable(true);
+    m_toolMeasure->setToolTip("Measure (M)  —  Drag to measure a distance · Esc to cancel (overlay only)");
+    toolBar->addAction(m_toolMeasure);
+
+    toolBar->addSeparator();
+
+    m_snapToggle = toolBar->addAction("⊞  Snap ON");
+    m_snapToggle->setCheckable(true);
+    m_snapToggle->setChecked(true);
+    m_snapToggle->setToolTip("Toggle grid + semantic snapping (Rule 12)");
+
+    // Wire tool rail → viewport tool switch + toast hint
+    connect(m_toolSelect,    &QAction::triggered, this, [this]{ setActiveTool(ViewportInteractionMode::Select);    });
+    connect(m_toolDrawWall,  &QAction::triggered, this, [this]{ setActiveTool(ViewportInteractionMode::DrawWall);  });
+    connect(m_toolAddDoor,   &QAction::triggered, this, [this]{ setActiveTool(ViewportInteractionMode::AddDoor);   });
+    connect(m_toolAddWindow, &QAction::triggered, this, [this]{ setActiveTool(ViewportInteractionMode::AddWindow); });
+    connect(m_toolMeasure,   &QAction::triggered, this, [this]{ setActiveTool(ViewportInteractionMode::Measure);   });
+    connect(m_snapToggle,    &QAction::toggled,   this, &MainWindow::toggleSnap);
+
+    // Wire viewport → tool rail: keyboard shortcuts emit toolChanged; sync checked state + toast
+    connect(m_viewport, &ViewportWidget::toolChanged, this, &MainWindow::onToolChanged);
+    // =========================================================================
 
     // Dockable 2D Architectural Library Browser Panel
     auto *dock = new QDockWidget("Architectural Library", this);
@@ -553,6 +613,81 @@ void MainWindow::exportJson() {
     }
 
     statusBar()->showMessage("Successfully exported JSON to " + QFileInfo(fileName).fileName(), 3000);
+}
+
+// =============================================================================
+// S20-A: Tool rail slots — setActiveTool, onToolChanged, toggleSnap
+// =============================================================================
+
+void MainWindow::setActiveTool(ViewportInteractionMode mode) {
+    // Update shared state and propagate to viewport (viewport will emit toolChanged back)
+    m_editState.activeTool = mode;
+    m_viewport->setActiveTool(mode);
+    // Toast is shown in onToolChanged (triggered by viewport's toolChanged signal)
+}
+
+void MainWindow::onToolChanged(ViewportInteractionMode mode) {
+    // --- Sync tool rail checked state (block re-entrant triggered signals) ---
+    if (m_toolSelect    && m_toolDrawWall && m_toolAddDoor &&
+        m_toolAddWindow && m_toolMeasure) {
+
+        const QSignalBlocker b1(m_toolSelect);
+        const QSignalBlocker b2(m_toolDrawWall);
+        const QSignalBlocker b3(m_toolAddDoor);
+        const QSignalBlocker b4(m_toolAddWindow);
+        const QSignalBlocker b5(m_toolMeasure);
+
+        // Transient sub-states (RubberbandSelect / DragMove) visually map to Select
+        bool selectActive =
+            (mode == ViewportInteractionMode::Select       ||
+             mode == ViewportInteractionMode::RubberbandSelect ||
+             mode == ViewportInteractionMode::DragMove);
+
+        m_toolSelect->setChecked(selectActive);
+        m_toolDrawWall->setChecked(mode  == ViewportInteractionMode::DrawWall);
+        m_toolAddDoor->setChecked(mode   == ViewportInteractionMode::AddDoor);
+        m_toolAddWindow->setChecked(mode == ViewportInteractionMode::AddWindow);
+        m_toolMeasure->setChecked(mode   == ViewportInteractionMode::Measure);
+    }
+
+    // --- Toast hint (Arcada Part 2 #12: every mode switch fires a non-blocking hint) ---
+    // Uses QStatusBar::showMessage which temporarily overlays m_statusLabel for 2500 ms
+    // then reverts — zero extra widget overhead (Q2 answer: best-suited approach).
+    switch (mode) {
+        case ViewportInteractionMode::Select:
+            statusBar()->showMessage(
+                "Select  —  Click to select · Drag to move · Shift/Ctrl adds to selection", 2500);
+            break;
+        case ViewportInteractionMode::DrawWall:
+            statusBar()->showMessage(
+                "Draw Wall  —  Click to place nodes · Double-click or Esc to end chain", 2500);
+            break;
+        case ViewportInteractionMode::AddDoor:
+            statusBar()->showMessage(
+                "Add Door  —  Click on a wall to place a door · Right-click to flip orientation", 2500);
+            break;
+        case ViewportInteractionMode::AddWindow:
+            statusBar()->showMessage(
+                "Add Window  —  Click on a wall to place a window · Right-click to flip orientation", 2500);
+            break;
+        case ViewportInteractionMode::Measure:
+            statusBar()->showMessage(
+                "Measure  —  Drag to measure a distance · Esc to cancel", 2500);
+            break;
+        default:
+            break; // Transient sub-states: no hint (avoids spam during drag operations)
+    }
+}
+
+void MainWindow::toggleSnap(bool enabled) {
+    m_editState.snapEnabled = enabled;
+    m_viewport->gridSettings().snapEnabled = enabled;
+
+    // Update toggle label text
+    if (m_snapToggle) {
+        m_snapToggle->setText(enabled ? "⊞  Snap ON" : "⊠  Snap OFF");
+    }
+    statusBar()->showMessage(enabled ? "Snap enabled" : "Snap disabled", 2000);
 }
 
 } // namespace kalara::editor

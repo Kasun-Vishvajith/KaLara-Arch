@@ -35,6 +35,7 @@ void ViewportWidget::paintGL() {
     drawSiteAndBuildings(painter);
     drawMarquee(painter);
     drawSnapIndicator(painter);
+    drawPreviewLayer(painter);   // Overlay: rubber-band preview + live length labels (S20-A)
 }
 
 void ViewportWidget::drawGrid(QPainter& painter) {
@@ -765,6 +766,7 @@ void ViewportWidget::deleteSelection() {
 }
 
 void ViewportWidget::mousePressEvent(QMouseEvent *event) {
+    // Pan: always available regardless of active tool (MMB or Alt+LMB)
     if (event->button() == Qt::MiddleButton ||
         (event->button() == Qt::LeftButton && (event->modifiers() & Qt::AltModifier))) {
         m_isPanning = true;
@@ -775,100 +777,118 @@ void ViewportWidget::mousePressEvent(QMouseEvent *event) {
 
     if (event->button() == Qt::LeftButton) {
         m_pressScreenPos = event->pos();
-        auto rawWorld = m_state.screenToWorld(event->position().x(), event->position().y());
-        m_pressWorldPos = rawWorld;
-        m_dragCurrentWorldPos = rawWorld;
+        // Note: use m_cursorWorld (already snapped) rather than raw position
+        m_pressWorldPos       = m_cursorWorld;
+        m_dragCurrentWorldPos = m_cursorWorld;
 
-        // Check if user clicked on an entity
-        auto* lvl = activeLevel();
-        std::optional<kalara::architecture::EntityId> hitId;
+        // Route by active tool mode (Arcada §3.1: every click does exactly one thing)
+        switch (m_mode) {
 
-        if (lvl) {
-            // 1. Check doors
-            for (const auto& door : lvl->doors()) {
-                auto* w = lvl->findWall(door->hostWallId);
-                if (w && door->containsPoint(rawWorld, *w)) {
-                    hitId = door->id;
-                    break;
+        // -----------------------------------------------------------------------
+        case ViewportInteractionMode::Select: {
+            // Hit-test all entity types in priority order; enter transient sub-states
+            auto* lvl = activeLevel();
+            std::optional<kalara::architecture::EntityId> hitId;
+
+            if (lvl) {
+                // 1. Doors
+                for (const auto& door : lvl->doors()) {
+                    auto* w = lvl->findWall(door->hostWallId);
+                    if (w && door->containsPoint(m_cursorWorld, *w)) { hitId = door->id; break; }
                 }
-            }
-            // 2. Check windows
-            if (!hitId) {
-                for (const auto& win : lvl->windows()) {
-                    auto* w = lvl->findWall(win->hostWallId);
-                    if (w && win->containsPoint(rawWorld, *w)) {
-                        hitId = win->id;
-                        break;
+                // 2. Windows
+                if (!hitId) {
+                    for (const auto& win : lvl->windows()) {
+                        auto* w = lvl->findWall(win->hostWallId);
+                        if (w && win->containsPoint(m_cursorWorld, *w)) { hitId = win->id; break; }
+                    }
+                }
+                // 3. Library instances (furniture, fixtures, etc.)
+                if (!hitId) {
+                    for (const auto& inst : lvl->libraryInstances()) {
+                        if (inst->containsPoint(m_cursorWorld)) { hitId = inst->id; break; }
+                    }
+                }
+                // 4. Walls
+                if (!hitId) {
+                    for (const auto& wall : lvl->walls()) {
+                        if (wall->containsPoint(m_cursorWorld)) { hitId = wall->id; break; }
+                    }
+                }
+                // 5. Rooms
+                if (!hitId) {
+                    for (const auto& room : lvl->rooms()) {
+                        if (room->containsPoint(m_cursorWorld)) { hitId = room->id; break; }
+                    }
+                }
+                // 6. Roofs
+                if (!hitId) {
+                    for (const auto& roof : lvl->roofs()) {
+                        if (roof->containsPoint(m_cursorWorld)) { hitId = roof->id; break; }
                     }
                 }
             }
-            // 3. Check library instances (furniture, fixtures, etc.)
-            if (!hitId) {
-                for (const auto& inst : lvl->libraryInstances()) {
-                    if (inst->containsPoint(rawWorld)) {
-                        hitId = inst->id;
-                        break;
+
+            if (hitId) {
+                if (event->modifiers() & Qt::ShiftModifier) {
+                    m_selection.toggle(*hitId);
+                } else if (event->modifiers() & Qt::ControlModifier) {
+                    m_selection.select(*hitId);
+                } else {
+                    if (!m_selection.isSelected(*hitId)) {
+                        m_selection.clear();
+                        m_selection.select(*hitId);
                     }
                 }
-            }
-            // 4. Check walls
-            if (!hitId) {
-                for (const auto& wall : lvl->walls()) {
-                    if (wall->containsPoint(rawWorld)) {
-                        hitId = wall->id;
-                        break;
-                    }
+                m_mode = ViewportInteractionMode::DragMove;
+                emit selectionChanged();
+            } else {
+                if (!(event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier))) {
+                    m_selection.clear();
+                    emit selectionChanged();
                 }
+                m_mode = ViewportInteractionMode::RubberbandSelect;
             }
-            // 5. Check rooms
-            if (!hitId) {
-                for (const auto& room : lvl->rooms()) {
-                    if (room->containsPoint(rawWorld)) {
-                        hitId = room->id;
-                        break;
-                    }
-                }
-            }
-            // 6. Check roofs (Step 12)
-            if (!hitId) {
-                for (const auto& roof : lvl->roofs()) {
-                    if (roof->containsPoint(rawWorld)) {
-                        hitId = roof->id;
-                        break;
-                    }
-                }
-            }
+            break;
         }
 
-        if (hitId) {
-            if (event->modifiers() & Qt::ShiftModifier) {
-                // Multi-select toggle
-                m_selection.toggle(*hitId);
-            } else if (event->modifiers() & Qt::ControlModifier) {
-                // Additive select
-                m_selection.select(*hitId);
-            } else {
-                // If clicked item is not in current selection, select only it
-                if (!m_selection.isSelected(*hitId)) {
-                    m_selection.clear();
-                    m_selection.select(*hitId);
-                }
-            }
-            // Prepare for potential drag move of selected entities
-            m_mode = ViewportInteractionMode::DragMove;
-            emit selectionChanged();
-        } else {
-            // Clicked empty canvas space
-            if (!(event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier))) {
-                m_selection.clear();
-                emit selectionChanged();
-            }
-            // Start rubberband marquee selection
-            m_mode = ViewportInteractionMode::RubberbandSelect;
+        // -----------------------------------------------------------------------
+        case ViewportInteractionMode::DrawWall:
+            // S20-B: chain node placement logic (data structures ready — impl in S20-B)
+            // m_drawingWall, m_wallChainNodes, m_previewEndPoint are all in place.
+            break;
+
+        // -----------------------------------------------------------------------
+        case ViewportInteractionMode::AddDoor:
+        case ViewportInteractionMode::AddWindow:
+            // S20-D: wall-click placement + opening split logic (impl in S20-D)
+            break;
+
+        // -----------------------------------------------------------------------
+        case ViewportInteractionMode::Measure:
+            // Begin overlay measurement — pure preview, no model mutation (§3.6)
+            m_measuring   = true;
+            m_measureStart = m_cursorWorld;
+            m_previewEndPoint = m_cursorWorld;
+            break;
+
+        default:
+            break;
         }
 
         update();
         event->accept();
+        return;
+    }
+
+    // RMB: future AddDoor/AddWindow orientation flip (S20-D stub)
+    if (event->button() == Qt::RightButton) {
+        if (m_mode == ViewportInteractionMode::AddDoor ||
+            m_mode == ViewportInteractionMode::AddWindow) {
+            // S20-D: call setOpeningFlipped() via TransactionManager
+            event->accept();
+            return;
+        }
     }
 }
 
@@ -909,8 +929,11 @@ void ViewportWidget::mouseMoveEvent(QMouseEvent *event) {
     }
 
     m_dragCurrentWorldPos = m_cursorWorld;
+    m_previewEndPoint     = m_cursorWorld;   // Keep rubber-band endpoint in sync (S20-A)
 
-    if (m_mode == ViewportInteractionMode::RubberbandSelect) {
+    if (m_mode == ViewportInteractionMode::RubberbandSelect ||
+        m_mode == ViewportInteractionMode::DrawWall ||
+        (m_mode == ViewportInteractionMode::Measure && m_measuring)) {
         update();
     } else if (m_mode == ViewportInteractionMode::DragMove && (event->buttons() & Qt::LeftButton)) {
         // Interactive live drag move
@@ -955,7 +978,20 @@ void ViewportWidget::mouseReleaseEvent(QMouseEvent *event) {
             }
         }
 
-        m_mode = ViewportInteractionMode::Select;
+        // Measure overlay: release ends the current measurement (pure preview — no model write)
+        if (m_mode == ViewportInteractionMode::Measure) {
+            m_measuring = false;
+        }
+
+        // Restore transient sub-states back to the user's chosen persistent tool.
+        // RubberbandSelect and DragMove only branch from Select mode, so this always resolves to Select.
+        // Keeping it generic ensures correctness if any future sub-state is added for another tool.
+        if (m_mode == ViewportInteractionMode::RubberbandSelect ||
+            m_mode == ViewportInteractionMode::DragMove) {
+            m_mode = m_editState ? m_editState->activeTool : ViewportInteractionMode::Select;
+        }
+        // DrawWall, AddDoor, AddWindow, and Measure remain active after release.
+
         update();
         event->accept();
     }
@@ -974,7 +1010,50 @@ void ViewportWidget::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Shift) {
         setOrthogonalMode(true);
     }
-    // Manipulation keyboard shortcuts
+
+    // --- Tool switching shortcuts (Arcada §3.1 / Appendix key map) ---
+    if (event->key() == Qt::Key_Escape) {
+        if (m_mode != ViewportInteractionMode::Select &&
+            m_mode != ViewportInteractionMode::RubberbandSelect &&
+            m_mode != ViewportInteractionMode::DragMove) {
+            // Cancel in-progress operation and return to Select tool
+            setActiveTool(ViewportInteractionMode::Select);
+        } else {
+            // Already in Select: Escape = deselect all
+            m_selection.clear();
+            emit selectionChanged();
+            update();
+        }
+        event->accept();
+        return;
+    }
+    if (event->key() == Qt::Key_V) {
+        setActiveTool(ViewportInteractionMode::Select);
+        event->accept();
+        return;
+    }
+    if (event->key() == Qt::Key_W && !(event->modifiers() & Qt::ControlModifier)) {
+        setActiveTool(ViewportInteractionMode::DrawWall);
+        event->accept();
+        return;
+    }
+    if (event->key() == Qt::Key_D && !(event->modifiers() & Qt::ControlModifier)) {
+        setActiveTool(ViewportInteractionMode::AddDoor);
+        event->accept();
+        return;
+    }
+    if (event->key() == Qt::Key_I) {
+        setActiveTool(ViewportInteractionMode::AddWindow);
+        event->accept();
+        return;
+    }
+    if (event->key() == Qt::Key_M) {
+        setActiveTool(ViewportInteractionMode::Measure);
+        event->accept();
+        return;
+    }
+
+    // --- Manipulation shortcuts (active in any mode for current selection) ---
     if (event->key() == Qt::Key_Left) {
         moveSelection(kalara::core::geometry::Vector2D(-100.0, 0.0));
         event->accept();
@@ -1013,5 +1092,126 @@ void ViewportWidget::keyReleaseEvent(QKeyEvent *event) {
     QOpenGLWidget::keyReleaseEvent(event);
 }
 
-} // namespace kalara::editor
+// =============================================================================
+// S20-A: EditState, tool switching, in-progress cancellation, preview overlay
+// =============================================================================
 
+void ViewportWidget::setEditState(EditState* state) noexcept {
+    m_editState = state;
+    // Sync initial snap setting from the shared state
+    if (m_editState) {
+        m_grid.snapEnabled = m_editState->snapEnabled;
+    }
+}
+
+void ViewportWidget::setActiveTool(ViewportInteractionMode mode) {
+    cancelInProgressOperation();
+    m_mode = mode;
+    if (m_editState) {
+        m_editState->activeTool = mode;
+    }
+
+    // Cursor adapts to active tool (Arcada §3.1 direct-manipulation feel)
+    switch (mode) {
+        case ViewportInteractionMode::DrawWall:
+        case ViewportInteractionMode::Measure:
+            setCursor(Qt::CrossCursor);
+            break;
+        case ViewportInteractionMode::AddDoor:
+        case ViewportInteractionMode::AddWindow:
+            setCursor(Qt::PointingHandCursor);
+            break;
+        default:
+            setCursor(Qt::ArrowCursor);
+            break;
+    }
+
+    update();
+    emit toolChanged(mode);
+}
+
+void ViewportWidget::cancelInProgressOperation() {
+    // Clear DrawWall chain state (S20-B will populate these fields)
+    m_drawingWall = false;
+    m_wallChainNodes.clear();
+
+    // Clear Measure state
+    m_measuring = false;
+
+    update();
+}
+
+void ViewportWidget::drawPreviewLayer(QPainter& painter) {
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    // --- DrawWall rubber-band segment preview (populated once S20-B lands) ---
+    if (m_mode == ViewportInteractionMode::DrawWall &&
+        m_drawingWall && !m_wallChainNodes.empty()) {
+
+        auto p1s = m_state.worldToScreen(m_wallChainNodes.back());
+        auto p2s = m_state.worldToScreen(m_previewEndPoint);
+
+        // Dashed cyan segment shows the wall that will be committed on next click
+        painter.setPen(QPen(QColor(80, 200, 255, 210), 1.5, Qt::DashLine));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawLine(QPointF(p1s.x, p1s.y), QPointF(p2s.x, p2s.y));
+
+        // Endpoint node marker (where the next click will anchor)
+        painter.setBrush(QColor(80, 200, 255, 180));
+        painter.setPen(Qt::NoPen);
+        painter.drawRect(QRectF(p2s.x - 4.0, p2s.y - 4.0, 8.0, 8.0));
+
+        // Live length label with a semi-transparent background pill
+        double len = m_wallChainNodes.back().distanceTo(m_previewEndPoint);
+        if (len > 1.0) {
+            QString lenStr = QString("%1 mm").arg(static_cast<int>(std::round(len)));
+            double midX = (p1s.x + p2s.x) * 0.5;
+            double midY = (p1s.y + p2s.y) * 0.5 - 15.0;
+            QRectF bg(midX - 44.0, midY - 2.0, 88.0, 18.0);
+            painter.fillRect(bg, QColor(18, 22, 32, 215));
+            painter.setPen(QColor(80, 200, 255));
+            QFont f = painter.font();
+            f.setPointSize(9);
+            f.setBold(true);
+            painter.setFont(f);
+            painter.drawText(bg, Qt::AlignCenter, lenStr);
+        }
+    }
+
+    // --- Measure overlay: drag to measure (§3.6, fully functional in S20-A) ---
+    if (m_mode == ViewportInteractionMode::Measure && m_measuring) {
+        auto p1s = m_state.worldToScreen(m_measureStart);
+        auto p2s = m_state.worldToScreen(m_previewEndPoint);
+
+        // Amber measurement line (visually distinct from wall/dimension lines)
+        painter.setPen(QPen(QColor(255, 215, 0, 230), 1.5, Qt::DashDotLine));
+        painter.drawLine(QPointF(p1s.x, p1s.y), QPointF(p2s.x, p2s.y));
+
+        // Endpoint dots
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QColor(255, 215, 0));
+        painter.drawEllipse(QPointF(p1s.x, p1s.y), 4.0, 4.0);
+        painter.drawEllipse(QPointF(p2s.x, p2s.y), 4.0, 4.0);
+
+        // Live length label
+        double len = m_measureStart.distanceTo(m_previewEndPoint);
+        if (len > 1.0) {
+            QString lenStr = QString("%1 mm").arg(static_cast<int>(std::round(len)));
+            double midX = (p1s.x + p2s.x) * 0.5;
+            double midY = (p1s.y + p2s.y) * 0.5 - 16.0;
+            QRectF bg(midX - 44.0, midY - 2.0, 88.0, 18.0);
+            painter.fillRect(bg, QColor(18, 22, 32, 215));
+            painter.setPen(QColor(255, 215, 0));
+            QFont f = painter.font();
+            f.setPointSize(9);
+            f.setBold(true);
+            painter.setFont(f);
+            painter.drawText(bg, Qt::AlignCenter, lenStr);
+        }
+    }
+
+    painter.restore();
+}
+
+} // namespace kalara::editor

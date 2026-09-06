@@ -1,4 +1,5 @@
 add_library(kalara_editor
+    include/kalara/editor/edit_state.hpp
     include/kalara/editor/viewport_state.hpp
     include/kalara/editor/grid_settings.hpp
     include/kalara/editor/viewport_widget.hpp

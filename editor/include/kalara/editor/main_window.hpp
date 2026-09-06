@@ -1,5 +1,6 @@
 #pragma once
 #include "kalara/editor/viewport_widget.hpp"
+#include "kalara/editor/edit_state.hpp"
 #include "kalara/architecture/project.hpp"
 #include "kalara/runtime/transaction.hpp"
 #include <QMainWindow>
@@ -39,25 +40,42 @@ private slots:
     void onSelectionChanged();
     void onPlaceLibraryItem(const std::string& itemId);
 
+    // S20-A: Tool rail slots
+    void setActiveTool(ViewportInteractionMode mode);   ///< Called by tool rail buttons
+    void onToolChanged(ViewportInteractionMode mode);   ///< Receives toolChanged signal from viewport; syncs rail + shows toast
+    void toggleSnap(bool enabled);                      ///< Snap toggle action
+
 private:
     void setupUI();
     void updateUndoRedoActions();
+    void updateWindowTitle();
 
-    ViewportWidget *m_viewport = nullptr;
+    // --- Widgets ---
+    ViewportWidget *m_viewport       = nullptr;
     class LibraryBrowserWidget *m_libraryBrowser = nullptr;
-    class LevelManagerWidget *m_levelManager = nullptr;
-    class SitePlanWidget *m_sitePlan = nullptr;
-    class ValidationWidget *m_validation = nullptr;
-    QLabel *m_coordLabel = nullptr;
-    QLabel *m_zoomLabel = nullptr;
+    class LevelManagerWidget   *m_levelManager   = nullptr;
+    class SitePlanWidget       *m_sitePlan       = nullptr;
+    class ValidationWidget     *m_validation     = nullptr;
+    QLabel *m_coordLabel  = nullptr;
+    QLabel *m_zoomLabel   = nullptr;
     QLabel *m_statusLabel = nullptr;
 
+    // --- Menu actions ---
     QAction *m_undoAction = nullptr;
     QAction *m_redoAction = nullptr;
 
-    QString m_currentFilePath;
-    void updateWindowTitle();
+    // --- S20-A: Tool rail actions (kept alive for checked-state sync) ---
+    QAction *m_toolSelect    = nullptr;
+    QAction *m_toolDrawWall  = nullptr;
+    QAction *m_toolAddDoor   = nullptr;
+    QAction *m_toolAddWindow = nullptr;
+    QAction *m_toolMeasure   = nullptr;
+    QAction *m_snapToggle    = nullptr;
 
+    // --- S20-A: Shared editor state (owned here; referenced by viewport) ---
+    EditState m_editState;
+
+    QString m_currentFilePath;
     std::unique_ptr<kalara::architecture::Project> m_project;
     kalara::runtime::TransactionManager m_transactionManager;
 };
