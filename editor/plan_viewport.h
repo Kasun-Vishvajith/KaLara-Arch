@@ -24,6 +24,7 @@ public:
     void fitScene();
     void activateSelectTool();void activateWallTool();
     bool wallToolActive()const{return wallMode_;}
+    std::string commitWallNumeric(std::string_view input);
     void toggleSnap();void toggleOrtho();void toggleGrid();
     bool snapEnabled()const{return snapOptions_.enabled;}bool orthoEnabled()const{return snapOptions_.ortho;}bool gridSnapEnabled()const{return snapOptions_.grid;}
     bool interactionActive()const{return selecting_;}

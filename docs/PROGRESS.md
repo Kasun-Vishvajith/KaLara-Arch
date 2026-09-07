@@ -2,25 +2,25 @@
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
 **Current step:** 07 — IN PROGRESS.
-**Implementation status:** Steps 00–06 verified. Step 07 is partial: atomic semantic wall/rectangle commands, connected edits, visible W tool, previews, and wall inspector work; numeric tool entry and derived joins remain.
+**Implementation status:** Steps 00–06 verified. Step 07 is partial: atomic semantic wall/rectangle commands, connected edits, visible W tool, length/absolute/relative numeric entry, previews, and wall inspector work; derived joins and rectangle UI remain.
 **Baseline repository:** 868dc8b; no tracked application source.
 **Last verified build/test:** Step 06 debug/release CTest 7/7; input fixture 42 checks; native shell 5/5 and render/interaction 9/9.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Finish Step 07 numeric wall entry, derived L/diagonal/near-parallel/T/X joins, rectangle UI, connected edit previews, native evidence, and release verification.
+Finish Step 07 derived L/diagonal/near-parallel/T/X joins, rectangle UI, connected edit previews, native evidence, and release verification.
 
 ## Session handoff — update after each run
 
 - Active step and status: Step 07 IN PROGRESS.
 - Latest implementation commit: Step 06 commit follows f2e8a8e; use git log.
-- Changes actually implemented: Step 07 atomic segment/rectangle authoring, explicit junction reuse, connected junction/wall edits, thickness/reference policy, default floor/layer, visible W tool and wall inspector.
+- Changes actually implemented: Step 07 atomic segment/rectangle authoring, explicit junction reuse across click and numeric chains, length/X,Y/@dX,dY input, connected edits, thickness/reference policy, default floor/layer, visible W tool and wall inspector.
 - Tests actually run and results: current Step 07 partial debug CTest 8/8; latest native and release checks NOT RUN.
 - Windows UI evidence: docs/evidence/step06-selected.png and docs/evidence/step06-crossing-marquee.png.
 - Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: add numeric wall tool input and derived join geometry, then run the full Step 07 native/release gate.
+- Next concrete action: implement Qt-free derived join geometry and rectangle UI, then run the full Step 07 native/release gate.
 - Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md, docs/09_ARCHITECTURAL_OBJECTS.md.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 

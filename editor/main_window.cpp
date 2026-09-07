@@ -46,7 +46,8 @@ MainWindow::MainWindow(const QString& settingsFile)
     wallType_=new QComboBox(inspectorPanel);wallType_->setAccessibleName("Wall type");wallType_->addItems({"Exterior 200","Interior 150","Custom"});
     wallThickness_=new QLineEdit(inspectorPanel);wallThickness_->setAccessibleName("Wall thickness in millimetres");wallThickness_->setPlaceholderText("Thickness (mm)");
     wallReference_=new QComboBox(inspectorPanel);wallReference_->setAccessibleName("Wall reference line");wallReference_->addItems({"Preserve centerline","Preserve left face","Preserve right face"});
-    inspectorLayout->addWidget(summary_);inspectorLayout->addWidget(wallType_);inspectorLayout->addWidget(wallThickness_);inspectorLayout->addWidget(wallReference_);inspectorLayout->addStretch();inspector_->setWidget(inspectorPanel);
+    wallInput_=new QLineEdit(inspectorPanel);wallInput_->setAccessibleName("Wall numeric input");wallInput_->setPlaceholderText("Length or X,Y or @dX,dY");wallInput_->hide();
+    inspectorLayout->addWidget(summary_);inspectorLayout->addWidget(wallInput_);inspectorLayout->addWidget(wallType_);inspectorLayout->addWidget(wallThickness_);inspectorLayout->addWidget(wallReference_);inspectorLayout->addStretch();inspector_->setWidget(inspectorPanel);
     addDockWidget(Qt::LeftDockWidgetArea, hierarchy_);
     addDockWidget(Qt::RightDockWidgetArea, inspector_);
     auto always = [] { return true; };
@@ -68,8 +69,8 @@ MainWindow::MainWindow(const QString& settingsFile)
     file->addSeparator();
     file->addAction(add("file.exit", "E&xit", QKeySequence::Quit, "application-exit", [this] { close(); }));
     auto* edit=menuBar()->addMenu("&Edit");
-    edit->addAction(add("tool.select", "&Select", QKeySequence("V"), "edit-select", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateSelectTool();statusBar()->showMessage("Select · click, drag marquee, Shift toggles, Alt cycles"); }));
-    edit->addAction(add("tool.wall", "&Wall", QKeySequence("W"), "draw-line", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateWallTool();statusBar()->showMessage("Wall · click start and endpoint · Esc cancels pending segment"); }));
+    edit->addAction(add("tool.select", "&Select", QKeySequence("V"), "edit-select", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateSelectTool();wallInput_->hide();statusBar()->showMessage("Select · click, drag marquee, Shift toggles, Alt cycles"); }));
+    edit->addAction(add("tool.wall", "&Wall", QKeySequence("W"), "draw-line", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateWallTool();wallInput_->show();statusBar()->showMessage("Wall · click start, point direction, enter length/X,Y/@dX,dY · Esc cancels pending segment"); }));
     auto* view = menuBar()->addMenu("&View");
     view->addAction(add("view.project", "Show/hide &Project", {}, "view-list-tree", [this] { hierarchy_->setVisible(!hierarchy_->isVisible()); }));
     view->addAction(add("view.inspector", "Show/hide &Inspector", {}, "document-properties", [this] { inspector_->setVisible(!inspector_->isVisible()); }));
@@ -96,6 +97,7 @@ MainWindow::MainWindow(const QString& settingsFile)
     });
     auto applyWall=[this]{auto* session=activeSession();if(!session||session->selection().size()!=1)return;const auto id=*session->selection().begin();const auto parsed=parseNumeric(wallThickness_->text().toStdString(),NumericField::length);if(!parsed.canonicalValue)return;auto policy=static_cast<architecture::ReferenceLine>(wallReference_->currentIndex());auto result=session->walls().changeThickness(id,geometry::Length(*parsed.canonicalValue),policy,wallType_->currentText().toStdString());if(std::holds_alternative<runtime::CommitSuccess>(result)){if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget())){const render::SceneBuilder builder;viewport->setScene(builder.build(*session->projectStore().snapshot(),{{{-10000000,-10000000},{10000000,10000000}},session->activeFloorId()}));}updateSession();}};
     connect(wallThickness_,&QLineEdit::editingFinished,this,applyWall);connect(wallType_,&QComboBox::currentTextChanged,this,[applyWall](const QString&){applyWall();});connect(wallReference_,&QComboBox::currentIndexChanged,this,[applyWall](int){applyWall();});
+    connect(wallInput_,&QLineEdit::returnPressed,this,[this]{if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget())){const auto error=viewport->commitWallNumeric(wallInput_->text().toStdString());if(error.empty()){wallInput_->clear();statusBar()->showMessage("Wall segment committed");}else statusBar()->showMessage(QString::fromStdString(error));}});
     resetWorkspace();
     restoreGeometry(settings_->value("workspace/geometry").toByteArray());
     restoreState(settings_->value("workspace/state").toByteArray(), 1);

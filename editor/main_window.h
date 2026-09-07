@@ -35,6 +35,7 @@ private:
     QDockWidget* inspector_;
     QLabel* summary_;
     QLineEdit* wallThickness_;
+    QLineEdit* wallInput_;
     QComboBox* wallType_;
     QComboBox* wallReference_;
     std::vector<std::unique_ptr<DocumentSession>> sessions_;

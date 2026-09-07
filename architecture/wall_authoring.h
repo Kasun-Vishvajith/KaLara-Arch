@@ -20,9 +20,11 @@ public:
     runtime::CommitResult moveJunction(const EntityId& junctionId,geometry::Point2 position);
     runtime::CommitResult translateWall(const EntityId& wallId,geometry::Vector2 delta);
     runtime::CommitResult changeThickness(const EntityId& wallId,geometry::Length thickness,ReferenceLine preserve,std::string wallType={});
+    const std::optional<EntityId>& lastEndJunction()const{return lastEndJunction_;}
 private:
     runtime::CommitResult apply(runtime::CommandRequest request);
     runtime::CommitResult failure(std::string code,std::string message)const;
     runtime::ProjectStore& store_;runtime::CommandService& commands_;
+    std::optional<EntityId> lastEndJunction_;
 };
 }
