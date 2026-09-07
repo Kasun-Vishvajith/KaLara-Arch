@@ -1,27 +1,27 @@
 # Implementation progress
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
-**Current step:** 06 — IN PROGRESS.
-**Implementation status:** Steps 00–05 verified: native/model/transaction foundation and dual-path 2D viewport; authoring remains missing.
+**Current step:** 07 — IN PROGRESS.
+**Implementation status:** Steps 00–06 verified: native/model/transaction foundation, dual-path 2D viewport, and reliable selection/tool/snap input; wall authoring remains missing.
 **Baseline repository:** 868dc8b; no tracked application source.
-**Last verified build/test:** Step 05 debug/release CTest 6/6; native viewport shell 5/5 with valid OpenGL context and painter capture.
+**Last verified build/test:** Step 06 debug/release CTest 7/7; input fixture 42 checks; native shell 5/5 and render/interaction 9/9.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Implement Step 06 selection, normalized tool lifecycle, snapping, cycling, keyboard input, and preview cancellation.
+Implement Step 07 semantic wall chain/rectangle authoring, connected topology edits, derived joins, numeric entry, and topology-preserving Undo.
 
 ## Session handoff — update after each run
 
-- Active step and status: Step 06 IN PROGRESS.
-- Latest implementation commit: Step 05 commit follows 2a95e34; use git log.
-- Changes actually implemented: scene/index, 2D camera, GPU-capable and painter viewport paths, pan/zoom/fit/grid, frame recording, per-session stores.
-- Tests actually run and results: Step 05 debug/release 6/6; native 5/5; DPR 100/150/200 shared renderer parity.
-- Windows UI evidence: docs/evidence/step01-native.txt and captures.
+- Active step and status: Step 07 IN PROGRESS.
+- Latest implementation commit: Step 06 commit follows f2e8a8e; use git log.
+- Changes actually implemented: normalized tool lifecycle, entity-ID selection, hit/marquee/cycling, semantic snaps with constraints and hysteresis, numeric parser, shared action/focus routing, viewport overlays.
+- Tests actually run and results: Step 06 debug/release 7/7; input 42 checks; native shell 5/5; native render/interaction 9/9.
+- Windows UI evidence: docs/evidence/step06-selected.png and docs/evidence/step06-crossing-marquee.png.
 - Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: Step 06 selection/tool/snap interaction vertical slice.
-- Relevant specification/ADR: docs/07_TOOLS_AND_INPUT.md.
+- Next concrete action: Step 07 connected semantic wall authoring vertical slice.
+- Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md, docs/09_ARCHITECTURAL_OBJECTS.md.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 
 ## Step ledger
@@ -34,8 +34,8 @@ Implement Step 06 selection, normalized tool lifecycle, snapping, cycling, keybo
 | 03 — Model identity and early serialization | PASS | [STEP_03](evidence/STEP_03.md) |
 | 04 — Transactions and undo before authoring | PASS | [STEP_04](evidence/STEP_04.md) |
 | 05 — Smooth 2D viewport and instrumentation | PASS | [STEP_05](evidence/STEP_05.md) |
-| 06 — Selection, tool lifecycle, and snapping | IN PROGRESS | Pending |
-| 07 — Architectural wall authoring | NOT STARTED | Pending |
+| 06 — Selection, tool lifecycle, and snapping | PASS | [STEP_06](evidence/STEP_06.md) |
+| 07 — Architectural wall authoring | IN PROGRESS | Pending |
 | 08 — Topology editing and hosted openings | NOT STARTED | Pending |
 | 09 — General 2D drafting and editing | NOT STARTED | Pending |
 | 10 — Transforms, clipboard, groups, and layers | NOT STARTED | Pending |

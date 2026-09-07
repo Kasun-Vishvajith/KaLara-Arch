@@ -16,8 +16,8 @@ Scene2D SceneBuilder::build(const architecture::Project& snapshot,const ViewSpec
         if(!overlaps(box(start,end,wall->thickness.mm/2),view.worldBounds))continue;
         const auto direction=end-start;const auto length=geometry::norm(direction);const geometry::Vector2 normal{-direction.y/length*wall->thickness.mm/2,direction.x/length*wall->thickness.mm/2};
         geometry::Polygon2 polygon{{start+normal*-1,end+normal*-1,end+normal,start+normal},{}};
-        scene.fills.push_back({polygon,{224,226,230,255},snapshot.revision});
-        scene.lines.push_back({polygon.outer[0],polygon.outer[1],0.35,{32,40,51,255},snapshot.revision});scene.lines.push_back({polygon.outer[3],polygon.outer[2],0.35,{32,40,51,255},snapshot.revision});
+        scene.fills.push_back({polygon,{224,226,230,255},snapshot.revision,id});
+        scene.lines.push_back({polygon.outer[0],polygon.outer[1],0.35,{32,40,51,255},snapshot.revision,id});scene.lines.push_back({polygon.outer[3],polygon.outer[2],0.35,{32,40,51,255},snapshot.revision,id});
         for(auto p:polygon.outer)expand(scene.bounds,p);
     }
     return scene;

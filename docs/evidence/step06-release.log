@@ -1,0 +1,48 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR)
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR)
+-- Configuring done (0.8s)
+-- Generating done (0.6s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+[1/31] Automatic MOC for target kalara_persistence
+[2/29] Automatic MOC for target model_codec_tests
+[3/27] Building CXX object CMakeFiles\kalara_render.dir\render\scene.cpp.obj
+[4/27] Linking CXX static library kalara_render.lib
+[5/27] Automatic MOC for target kalara_editor
+[6/27] Building CXX object CMakeFiles\kalara_editor.dir\editor\input_system.cpp.obj
+[7/27] Building CXX object CMakeFiles\kalara_editor.dir\editor\session.cpp.obj
+[8/27] Building CXX object CMakeFiles\kalara_editor.dir\kalara_editor_autogen\mocs_compilation.cpp.obj
+[9/27] Building CXX object CMakeFiles\kalara_editor.dir\editor\plan_viewport.cpp.obj
+[10/27] Building CXX object CMakeFiles\kalara_editor.dir\editor\main_window.cpp.obj
+[11/27] Linking CXX static library kalara_editor.lib
+[12/27] Automatic MOC for target kalara_arch
+[13/26] Automatic MOC for target input_system_tests
+[14/26] Building CXX object CMakeFiles\input_system_tests.dir\input_system_tests_autogen\mocs_compilation.cpp.obj
+[15/26] Automatic MOC for target render_tests
+[16/25] Automatic MOC for target shell_tests
+[17/24] Building CXX object CMakeFiles\input_system_tests.dir\tests\input_system_tests.cpp.obj
+[18/24] Linking CXX executable input_system_tests.exe
+[19/24] Building CXX object CMakeFiles\kalara_arch.dir\editor\main.cpp.obj
+[20/24] Linking CXX executable kalara_arch.exe
+[21/24] Building CXX object CMakeFiles\shell_tests.dir\tests\shell_tests.cpp.obj
+[22/24] Linking CXX executable shell_tests.exe
+[23/24] Building CXX object CMakeFiles\render_tests.dir\tests\render_tests.cpp.obj
+[24/24] Linking CXX executable render_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+    Start 1: core_tests
+1/7 Test #1: core_tests .......................   Passed    0.07 sec
+    Start 2: geometry_tests
+2/7 Test #2: geometry_tests ...................   Passed    0.07 sec
+    Start 3: command_service_tests
+3/7 Test #3: command_service_tests ............   Passed    0.07 sec
+    Start 4: model_codec_tests
+4/7 Test #4: model_codec_tests ................   Passed    0.11 sec
+    Start 5: shell_tests
+5/7 Test #5: shell_tests ......................   Passed    0.44 sec
+    Start 6: render_tests
+6/7 Test #6: render_tests .....................   Passed    0.81 sec
+    Start 7: input_system_tests
+7/7 Test #7: input_system_tests ...............   Passed    0.07 sec
+
+100% tests passed out of 7
+
+Total Test time (real) =   2.01 sec

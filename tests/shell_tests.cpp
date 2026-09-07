@@ -6,6 +6,8 @@
 #include <QTabWidget>
 #include <QtTest>
 #include <QScreen>
+#include <QLineEdit>
+#include <QStatusBar>
 class ShellTests : public QObject {
     Q_OBJECT
 private slots:
@@ -29,6 +31,14 @@ private slots:
         scene.bounds=kalara::geometry::AABB2{{0,-100},{6000,500}};
         viewport->setScene(scene);
         viewport->fitScene();
+        gl->setFocus();
+        QVERIFY(QTest::qWaitForWindowActive(&window));
+        QTest::keyClick(gl,Qt::Key_F3);
+        QVERIFY(!viewport->snapEnabled());
+        QTest::keyClick(gl,Qt::Key_F3);
+        QVERIFY(viewport->snapEnabled());
+        QTest::keyClick(gl,Qt::Key_V);
+        QVERIFY(window.statusBar()->currentMessage().startsWith("Select"));
         for (bool dark : {false, true}) {
             window.setDark(dark);
             for (const QSize size : {QSize(1366, 768), QSize(1920, 1080)}) {
@@ -58,6 +68,11 @@ private slots:
         QVERIFY(stats.count>0);
         qInfo() << "Native frame samples" << stats.count << "median" << stats.medianMs << "p95" << stats.p95Ms << "p99" << stats.p99Ms << "max" << stats.maxMs;
         QVERIFY(window.screen()->grabWindow(window.winId()).save("docs/evidence/step05-painter-native.png"));
+        QLineEdit input(&window);
+        input.show();input.setFocus();
+        QTest::keyClick(&input,Qt::Key_W);
+        QCOMPARE(input.text(),QString("w"));
+        input.hide();
         window.close();
         QVERIFY(!window.isVisible());
     }
@@ -67,7 +82,7 @@ private slots:
         window.show();
         QVERIFY(QTest::qWaitForWindowExposed(&window));
         auto* first = window.activeSession();
-        first->select({1,2});
+        first->select({kalara::architecture::EntityId("one"),kalara::architecture::EntityId("two")});
         window.registry().get("file.new")->trigger();
         QVERIFY(first != window.activeSession());
         QVERIFY(window.activeSession()->selection().empty());

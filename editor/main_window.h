@@ -21,6 +21,7 @@ public:
     void setDark(bool dark);
 protected:
     void closeEvent(QCloseEvent* event) override;
+    void keyPressEvent(QKeyEvent* event) override;
 private:
     void newDocument();
     void updateSession();

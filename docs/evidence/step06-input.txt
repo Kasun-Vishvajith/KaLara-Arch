@@ -1,0 +1,1 @@
+input-v1: 42 checks PASS; marquee direction, lock/hide, zoom-stable snaps, hysteresis, cancellation

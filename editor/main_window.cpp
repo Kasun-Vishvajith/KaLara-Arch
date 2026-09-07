@@ -7,6 +7,7 @@
 #include <QDockWidget>
 #include <QLabel>
 #include <QLineEdit>
+#include <QKeyEvent>
 #include <QListWidget>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -61,6 +62,8 @@ MainWindow::MainWindow(const QString& settingsFile)
     }));
     file->addSeparator();
     file->addAction(add("file.exit", "E&xit", QKeySequence::Quit, "application-exit", [this] { close(); }));
+    auto* edit=menuBar()->addMenu("&Edit");
+    edit->addAction(add("tool.select", "&Select", {}, "edit-select", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->setFocus();statusBar()->showMessage("Select · click, drag marquee, Shift toggles, Alt cycles"); }));
     auto* view = menuBar()->addMenu("&View");
     view->addAction(add("view.project", "Show/hide &Project", {}, "view-list-tree", [this] { hierarchy_->setVisible(!hierarchy_->isVisible()); }));
     view->addAction(add("view.inspector", "Show/hide &Inspector", {}, "document-properties", [this] { inspector_->setVisible(!inspector_->isVisible()); }));
@@ -69,8 +72,11 @@ MainWindow::MainWindow(const QString& settingsFile)
     view->addAction(add("view.fit", "&Fit plan", QKeySequence("Ctrl+0"), "zoom-fit-best", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->fitScene(); }));
     auto* fallback=add("view.painter", "Use &Painter fallback", {}, "video-display", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->setRendererMode(registry_.get("view.painter")->isChecked()?RendererMode::painter:RendererMode::gpu); });
     fallback->setCheckable(true);
+    auto* snapAction=add("view.snap", "Enable &Snapping", QKeySequence(Qt::Key_F3), "snap-nodes", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->toggleSnap(); });snapAction->setCheckable(true);snapAction->setChecked(true);view->addAction(snapAction);
+    auto* orthoAction=add("view.ortho", "Enable &Ortho", QKeySequence(Qt::Key_F8), "transform-move-horizontal", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->toggleOrtho(); });orthoAction->setCheckable(true);view->addAction(orthoAction);
+    auto* gridAction=add("view.grid_snap", "Enable &Grid Snap", QKeySequence(Qt::Key_F9), "view-grid", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->toggleGrid(); });gridAction->setCheckable(true);view->addAction(gridAction);
     auto* tools = menuBar()->addMenu("&Tools");
-    tools->addAction(add("tools.search", "&Find command…", QKeySequence("Ctrl+Shift+P"), "edit-find", [this] { commandSearch(); }));
+    tools->addAction(add("tools.search", "&Find command…", QKeySequence("Ctrl+K"), "edit-find", [this] { commandSearch(); }));
     auto* help = menuBar()->addMenu("&Help");
     help->addAction(add("help.about", "&About KaLara Arch", QKeySequence::HelpContents, "help-about", [this] {
         QMessageBox::about(this, "KaLara Arch", "Local 2D architectural workbench\nDevelopment build: application foundation\nDrafting tools are not available in this build.");
@@ -102,7 +108,10 @@ void MainWindow::newDocument() {
     const render::SceneBuilder builder;
     const auto snapshot=session->projectStore().snapshot();
     page->setScene(builder.build(*snapshot,{{{-100000,-100000},{100000,100000}},std::nullopt}));
+    page->setSession(session.get());
     connect(page,&PlanViewport::cameraChanged,this,[this,page]{statusBar()->showMessage(QString("Ready · millimetres · %1% · %2 renderer").arg(qRound(page->camera().pixelsPerMm*1000)).arg(page->activeMode()==RendererMode::gpu?"GPU":"Painter"));});
+    connect(page,&PlanViewport::inputSettingsChanged,this,[this,page]{statusBar()->showMessage(QString("Select · Snap %1 · Ortho %2 · Grid snap %3").arg(page->snapEnabled()?"on":"off",page->orthoEnabled()?"on":"off",page->gridSnapEnabled()?"on":"off"));});
+    connect(page,&PlanViewport::actionRequested,this,[this](const QString& id){if(auto* action=registry_.get(id))action->trigger();});
     const auto title = session->title;
     connect(session.get(), &DocumentSession::selectionChanged, this, &MainWindow::updateSession);
     sessions_.push_back(std::move(session));
@@ -139,6 +148,11 @@ void MainWindow::saveWorkspace() {
 void MainWindow::closeEvent(QCloseEvent* event) {
     saveWorkspace();
     QMainWindow::closeEvent(event);
+}
+void MainWindow::keyPressEvent(QKeyEvent* event){
+    const bool textFocused=qobject_cast<QLineEdit*>(QApplication::focusWidget())!=nullptr;
+    if(routeSingleLetterShortcut({event->key(),event->modifiers().testFlag(Qt::ShiftModifier),event->modifiers().testFlag(Qt::ControlModifier),event->modifiers().testFlag(Qt::AltModifier),textFocused,true})&&event->key()==Qt::Key_V){registry_.get("tool.select")->trigger();event->accept();return;}
+    QMainWindow::keyPressEvent(event);
 }
 void MainWindow::setDark(bool dark) {
     dark_ = dark;

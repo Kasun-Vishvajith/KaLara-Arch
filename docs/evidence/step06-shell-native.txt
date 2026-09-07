@@ -1,0 +1,16 @@
+********* Start testing of ShellTests *********
+Config: Using QtTest library 6.7.2, Qt 6.7.2 (x86_64-little_endian-llp64 shared (dynamic) debug build; by MSVC 2019), windows 11
+PASS   : ShellTests::initTestCase()
+QINFO  : ShellTests::nativeVisual() Requested DIP QSize(1366, 768) Actual DIP QSize(1366, 768) DPR 1.25
+QWARN  : ShellTests::nativeVisual() QWindowsWindow::setGeometry: Unable to set geometry 2400x1350+9+38 (frame: 2418x1397+0+0) on QWidgetWindow/"mainWindowWindow" on "\\.\DISPLAY1". Resulting geometry: 1924x1055+9+38 (frame: 1942x1102+0+0) margins: 9, 38, 9, 9 minimum size: 1100x700 MINMAXINFO(maxSize=POINT(x=0, y=0), maxpos=POINT(x=0, y=0), maxtrack=POINT(x=0, y=0), mintrack=POINT(x=1393, y=922)))
+QINFO  : ShellTests::nativeVisual() Requested DIP QSize(1920, 1080) Actual DIP QSize(1539, 844) DPR 1.25
+QINFO  : ShellTests::nativeVisual() Requested DIP QSize(1366, 768) Actual DIP QSize(1366, 768) DPR 1.25
+QWARN  : ShellTests::nativeVisual() QWindowsWindow::setGeometry: Unable to set geometry 2400x1350+9+38 (frame: 2418x1397+0+0) on QWidgetWindow/"mainWindowWindow" on "\\.\DISPLAY1". Resulting geometry: 1924x1055+9+38 (frame: 1942x1102+0+0) margins: 9, 38, 9, 9 minimum size: 1100x700 MINMAXINFO(maxSize=POINT(x=0, y=0), maxpos=POINT(x=0, y=0), maxtrack=POINT(x=0, y=0), mintrack=POINT(x=1393, y=922)))
+QINFO  : ShellTests::nativeVisual() Requested DIP QSize(1920, 1080) Actual DIP QSize(1539, 844) DPR 1.25
+QINFO  : ShellTests::nativeVisual() Native frame samples 14 median 2.8521 p95 102.463 p99 102.463 max 102.463
+PASS   : ShellTests::nativeVisual()
+PASS   : ShellTests::sessionsAndActions()
+PASS   : ShellTests::persistenceAndReset()
+PASS   : ShellTests::cleanupTestCase()
+Totals: 5 passed, 0 failed, 0 skipped, 0 blacklisted, 10497ms
+********* Finished testing of ShellTests *********
