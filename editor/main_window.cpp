@@ -3,6 +3,7 @@
 #include "render/scene.h"
 #include <QApplication>
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QDialog>
 #include <QDockWidget>
 #include <QLabel>
@@ -37,11 +38,15 @@ MainWindow::MainWindow(const QString& settingsFile)
     hierarchy_->setWidget(hierarchyText);
     inspector_ = new QDockWidget("Inspector", this);
     inspector_->setObjectName("inspectorDock");
-    summary_ = new QLabel("No selection", inspector_);
+    auto* inspectorPanel=new QWidget(inspector_);auto* inspectorLayout=new QVBoxLayout(inspectorPanel);
+    summary_ = new QLabel("No selection", inspectorPanel);
     summary_->setMargin(16);
     summary_->setAlignment(Qt::AlignTop);
     summary_->setAccessibleName("Selection summary");
-    inspector_->setWidget(summary_);
+    wallType_=new QComboBox(inspectorPanel);wallType_->setAccessibleName("Wall type");wallType_->addItems({"Exterior 200","Interior 150","Custom"});
+    wallThickness_=new QLineEdit(inspectorPanel);wallThickness_->setAccessibleName("Wall thickness in millimetres");wallThickness_->setPlaceholderText("Thickness (mm)");
+    wallReference_=new QComboBox(inspectorPanel);wallReference_->setAccessibleName("Wall reference line");wallReference_->addItems({"Preserve centerline","Preserve left face","Preserve right face"});
+    inspectorLayout->addWidget(summary_);inspectorLayout->addWidget(wallType_);inspectorLayout->addWidget(wallThickness_);inspectorLayout->addWidget(wallReference_);inspectorLayout->addStretch();inspector_->setWidget(inspectorPanel);
     addDockWidget(Qt::LeftDockWidgetArea, hierarchy_);
     addDockWidget(Qt::RightDockWidgetArea, inspector_);
     auto always = [] { return true; };
@@ -63,7 +68,8 @@ MainWindow::MainWindow(const QString& settingsFile)
     file->addSeparator();
     file->addAction(add("file.exit", "E&xit", QKeySequence::Quit, "application-exit", [this] { close(); }));
     auto* edit=menuBar()->addMenu("&Edit");
-    edit->addAction(add("tool.select", "&Select", {}, "edit-select", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->setFocus();statusBar()->showMessage("Select · click, drag marquee, Shift toggles, Alt cycles"); }));
+    edit->addAction(add("tool.select", "&Select", QKeySequence("V"), "edit-select", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateSelectTool();statusBar()->showMessage("Select · click, drag marquee, Shift toggles, Alt cycles"); }));
+    edit->addAction(add("tool.wall", "&Wall", QKeySequence("W"), "draw-line", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateWallTool();statusBar()->showMessage("Wall · click start and endpoint · Esc cancels pending segment"); }));
     auto* view = menuBar()->addMenu("&View");
     view->addAction(add("view.project", "Show/hide &Project", {}, "view-list-tree", [this] { hierarchy_->setVisible(!hierarchy_->isVisible()); }));
     view->addAction(add("view.inspector", "Show/hide &Inspector", {}, "document-properties", [this] { inspector_->setVisible(!inspector_->isVisible()); }));
@@ -79,7 +85,7 @@ MainWindow::MainWindow(const QString& settingsFile)
     tools->addAction(add("tools.search", "&Find command…", QKeySequence("Ctrl+K"), "edit-find", [this] { commandSearch(); }));
     auto* help = menuBar()->addMenu("&Help");
     help->addAction(add("help.about", "&About KaLara Arch", QKeySequence::HelpContents, "help-about", [this] {
-        QMessageBox::about(this, "KaLara Arch", "Local 2D architectural workbench\nDevelopment build: application foundation\nDrafting tools are not available in this build.");
+        QMessageBox::about(this, "KaLara Arch", "Local 2D architectural workbench\nSemantic connected-wall authoring development build.");
     }));
     statusBar()->setMinimumHeight(28);
     statusBar()->showMessage("Ready · Empty document · millimetres");
@@ -88,6 +94,8 @@ MainWindow::MainWindow(const QString& settingsFile)
         documents_->setCurrentIndex(index);
         registry_.get("file.close")->trigger();
     });
+    auto applyWall=[this]{auto* session=activeSession();if(!session||session->selection().size()!=1)return;const auto id=*session->selection().begin();const auto parsed=parseNumeric(wallThickness_->text().toStdString(),NumericField::length);if(!parsed.canonicalValue)return;auto policy=static_cast<architecture::ReferenceLine>(wallReference_->currentIndex());auto result=session->walls().changeThickness(id,geometry::Length(*parsed.canonicalValue),policy,wallType_->currentText().toStdString());if(std::holds_alternative<runtime::CommitSuccess>(result)){if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget())){const render::SceneBuilder builder;viewport->setScene(builder.build(*session->projectStore().snapshot(),{{{-10000000,-10000000},{10000000,10000000}},session->activeFloorId()}));}updateSession();}};
+    connect(wallThickness_,&QLineEdit::editingFinished,this,applyWall);connect(wallType_,&QComboBox::currentTextChanged,this,[applyWall](const QString&){applyWall();});connect(wallReference_,&QComboBox::currentIndexChanged,this,[applyWall](int){applyWall();});
     resetWorkspace();
     restoreGeometry(settings_->value("workspace/geometry").toByteArray());
     restoreState(settings_->value("workspace/state").toByteArray(), 1);
@@ -125,6 +133,7 @@ DocumentSession* MainWindow::activeSession() const {
 void MainWindow::updateSession() {
     auto* session = activeSession();
     summary_->setText(session ? QString("%1\n\n%2 selected").arg(session->title).arg(session->selection().size()) : "No open document");
+    bool wallSelected=false;if(session&&session->selection().size()==1)if(const auto* entity=session->projectStore().snapshot()->find(*session->selection().begin()))if(const auto* wall=std::get_if<architecture::Wall>(entity)){wallSelected=true;wallThickness_->blockSignals(true);wallType_->blockSignals(true);wallReference_->blockSignals(true);wallThickness_->setText(QString::number(wall->thickness.mm,'f',1));wallType_->setCurrentText(QString::fromStdString(wall->wallType));wallReference_->setCurrentIndex(static_cast<int>(wall->referenceLine));wallThickness_->blockSignals(false);wallType_->blockSignals(false);wallReference_->blockSignals(false);summary_->setText(QString("Wall %1\nCenterline length and placement\n%2 mm thick").arg(QString::fromStdString(wall->header.id.str()),QString::number(wall->thickness.mm,'f',1)));}wallThickness_->setVisible(wallSelected);wallType_->setVisible(wallSelected);wallReference_->setVisible(wallSelected);
     setWindowTitle(session ? session->title + " — KaLara Arch" : "KaLara Arch");
     registry_.refresh();
     if (auto* action = registry_.get("file.close")) action->setEnabled(session != nullptr);
@@ -151,7 +160,7 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 }
 void MainWindow::keyPressEvent(QKeyEvent* event){
     const bool textFocused=qobject_cast<QLineEdit*>(QApplication::focusWidget())!=nullptr;
-    if(routeSingleLetterShortcut({event->key(),event->modifiers().testFlag(Qt::ShiftModifier),event->modifiers().testFlag(Qt::ControlModifier),event->modifiers().testFlag(Qt::AltModifier),textFocused,true})&&event->key()==Qt::Key_V){registry_.get("tool.select")->trigger();event->accept();return;}
+    if(routeSingleLetterShortcut({event->key(),event->modifiers().testFlag(Qt::ShiftModifier),event->modifiers().testFlag(Qt::ControlModifier),event->modifiers().testFlag(Qt::AltModifier),textFocused,true})&&(event->key()==Qt::Key_V||event->key()==Qt::Key_W)){registry_.get(event->key()==Qt::Key_V?"tool.select":"tool.wall")->trigger();event->accept();return;}
     QMainWindow::keyPressEvent(event);
 }
 void MainWindow::setDark(bool dark) {

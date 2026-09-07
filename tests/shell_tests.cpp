@@ -39,6 +39,9 @@ private slots:
         QVERIFY(viewport->snapEnabled());
         QTest::keyClick(gl,Qt::Key_V);
         QVERIFY(window.statusBar()->currentMessage().startsWith("Select"));
+        QTest::keyClick(gl,Qt::Key_W);
+        QVERIFY(viewport->wallToolActive());
+        QVERIFY(window.statusBar()->currentMessage().startsWith("Wall"));
         for (bool dark : {false, true}) {
             window.setDark(dark);
             for (const QSize size : {QSize(1366, 768), QSize(1920, 1080)}) {

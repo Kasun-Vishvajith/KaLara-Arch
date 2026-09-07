@@ -3,6 +3,7 @@
 #include "render/frame_recorder.h"
 #include "render/scene.h"
 #include "editor/input_system.h"
+#include "architecture/wall_authoring.h"
 #include <QWidget>
 #include <memory>
 class QImage;
@@ -21,6 +22,8 @@ public:
     RendererMode activeMode()const{return activeMode_;}
     void setRendererMode(RendererMode mode);
     void fitScene();
+    void activateSelectTool();void activateWallTool();
+    bool wallToolActive()const{return wallMode_;}
     void toggleSnap();void toggleOrtho();void toggleGrid();
     bool snapEnabled()const{return snapOptions_.enabled;}bool orthoEnabled()const{return snapOptions_.ortho;}bool gridSnapEnabled()const{return snapOptions_.grid;}
     bool interactionActive()const{return selecting_;}
@@ -37,6 +40,7 @@ private:
     void draw(QPainter& painter,const QSizeF& dipSize)const;
     void record(double milliseconds);
     void pointerDown(const PointerEvent& event);void pointerMove(const PointerEvent& event);void pointerUp(const PointerEvent& event);void keyInput(const KeyEvent& event);void cancelInteraction();
+    void refreshScene();std::optional<architecture::EntityId> snappedJunction()const;
     friend class Canvas;
     friend class GlCanvas;
     QWidget* canvas_=nullptr;
@@ -53,5 +57,8 @@ private:
     std::optional<SnapCandidate> snap_;
     std::size_t hitCycle_=0;
     bool spaceHeld_=false;
+    bool wallMode_=false;
+    std::optional<architecture::WallEndpoint> wallAnchor_;
+    std::optional<geometry::Point2> wallPreview_;
 };
 }

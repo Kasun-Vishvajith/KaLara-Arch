@@ -2,25 +2,25 @@
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
 **Current step:** 07 — IN PROGRESS.
-**Implementation status:** Steps 00–06 verified: native/model/transaction foundation, dual-path 2D viewport, and reliable selection/tool/snap input; wall authoring remains missing.
+**Implementation status:** Steps 00–06 verified. Step 07 is partial: atomic semantic wall/rectangle commands, connected edits, visible W tool, previews, and wall inspector work; numeric tool entry and derived joins remain.
 **Baseline repository:** 868dc8b; no tracked application source.
 **Last verified build/test:** Step 06 debug/release CTest 7/7; input fixture 42 checks; native shell 5/5 and render/interaction 9/9.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Implement Step 07 semantic wall chain/rectangle authoring, connected topology edits, derived joins, numeric entry, and topology-preserving Undo.
+Finish Step 07 numeric wall entry, derived L/diagonal/near-parallel/T/X joins, rectangle UI, connected edit previews, native evidence, and release verification.
 
 ## Session handoff — update after each run
 
 - Active step and status: Step 07 IN PROGRESS.
 - Latest implementation commit: Step 06 commit follows f2e8a8e; use git log.
-- Changes actually implemented: normalized tool lifecycle, entity-ID selection, hit/marquee/cycling, semantic snaps with constraints and hysteresis, numeric parser, shared action/focus routing, viewport overlays.
-- Tests actually run and results: Step 06 debug/release 7/7; input 42 checks; native shell 5/5; native render/interaction 9/9.
+- Changes actually implemented: Step 07 atomic segment/rectangle authoring, explicit junction reuse, connected junction/wall edits, thickness/reference policy, default floor/layer, visible W tool and wall inspector.
+- Tests actually run and results: current Step 07 partial debug CTest 8/8; latest native and release checks NOT RUN.
 - Windows UI evidence: docs/evidence/step06-selected.png and docs/evidence/step06-crossing-marquee.png.
 - Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: Step 07 connected semantic wall authoring vertical slice.
+- Next concrete action: add numeric wall tool input and derived join geometry, then run the full Step 07 native/release gate.
 - Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md, docs/09_ARCHITECTURAL_OBJECTS.md.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 

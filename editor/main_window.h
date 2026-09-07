@@ -8,6 +8,8 @@
 class QTabWidget;
 class QDockWidget;
 class QLabel;
+class QLineEdit;
+class QComboBox;
 namespace kalara::editor {
 class MainWindow final : public QMainWindow {
     Q_OBJECT
@@ -32,6 +34,9 @@ private:
     QDockWidget* hierarchy_;
     QDockWidget* inspector_;
     QLabel* summary_;
+    QLineEdit* wallThickness_;
+    QComboBox* wallType_;
+    QComboBox* wallReference_;
     std::vector<std::unique_ptr<DocumentSession>> sessions_;
     bool dark_ = false;
     int nextDocument_ = 1;

@@ -6,6 +6,7 @@
 #include <set>
 #include <cstdint>
 #include "runtime/command_service.h"
+#include "architecture/wall_authoring.h"
 #include "editor/input_system.h"
 
 namespace kalara::editor {
@@ -23,6 +24,9 @@ public:
     void select(std::set<architecture::EntityId> ids);
     runtime::ProjectStore& projectStore() { return *projectStore_; }
     runtime::CommandService& commands() { return *commands_; }
+    architecture::WallAuthoring& walls() { return *walls_; }
+    const architecture::EntityId& activeFloorId()const{return activeFloorId_;}
+    const architecture::EntityId& wallLayerId()const{return wallLayerId_;}
     ToolController& tools() { return tools_; }
 signals:
     void selectionChanged();
@@ -30,6 +34,8 @@ private:
     std::set<architecture::EntityId> selection_;
     std::unique_ptr<runtime::ProjectStore> projectStore_;
     std::unique_ptr<runtime::CommandService> commands_;
+    std::unique_ptr<architecture::WallAuthoring> walls_;
+    architecture::EntityId activeFloorId_{"floor"},wallLayerId_{"walls"};
     ToolController tools_;
 };
 }
