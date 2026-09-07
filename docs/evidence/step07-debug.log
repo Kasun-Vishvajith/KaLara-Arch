@@ -1,0 +1,29 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR)
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR)
+-- Configuring done (0.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+[1/4] Automatic MOC for target render_tests
+[2/3] Building CXX object CMakeFiles\render_tests.dir\tests\render_tests.cpp.obj
+[3/3] Linking CXX executable render_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+    Start 1: core_tests
+1/8 Test #1: core_tests .......................   Passed    0.03 sec
+    Start 2: geometry_tests
+2/8 Test #2: geometry_tests ...................   Passed    0.04 sec
+    Start 3: command_service_tests
+3/8 Test #3: command_service_tests ............   Passed    0.04 sec
+    Start 4: wall_authoring_tests
+4/8 Test #4: wall_authoring_tests .............   Passed    0.04 sec
+    Start 5: model_codec_tests
+5/8 Test #5: model_codec_tests ................   Passed    0.09 sec
+    Start 6: shell_tests
+6/8 Test #6: shell_tests ......................   Passed    1.99 sec
+    Start 7: render_tests
+7/8 Test #7: render_tests .....................   Passed    1.49 sec
+    Start 8: input_system_tests
+8/8 Test #8: input_system_tests ...............   Passed    0.04 sec
+
+100% tests passed out of 8
+
+Total Test time (real) =   3.83 sec

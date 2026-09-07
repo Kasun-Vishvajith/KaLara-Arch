@@ -1,26 +1,26 @@
 # Implementation progress
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
-**Current step:** 07 — IN PROGRESS.
-**Implementation status:** Steps 00–06 verified. Step 07 is partial: atomic semantic wall/rectangle commands, connected edits, visible W tool, length/absolute/relative numeric entry, previews, and wall inspector work; derived joins and rectangle UI remain.
+**Current step:** 08 — IN PROGRESS.
+**Implementation status:** Steps 00–07 verified, including connected semantic wall authoring, numeric/rectangle input, derived joins, inspector edits, previews, and topology-preserving Undo. Hosted openings and split/merge remain.
 **Baseline repository:** 868dc8b; no tracked application source.
-**Last verified build/test:** Step 06 debug/release CTest 7/7; input fixture 42 checks; native shell 5/5 and render/interaction 9/9.
+**Last verified build/test:** Step 07 debug/release CTest 8/8; native shell 5/5; native render/interaction 12/12.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Finish Step 07 derived L/diagonal/near-parallel/T/X joins, rectangle UI, connected edit previews, native evidence, and release verification.
+Implement Step 08 wall split/merge and hosted door/window semantics with real cutouts, interval validation, reversal, remapping, and Undo.
 
 ## Session handoff — update after each run
 
-- Active step and status: Step 07 IN PROGRESS.
+- Active step and status: Step 08 IN PROGRESS.
 - Latest implementation commit: Step 06 commit follows f2e8a8e; use git log.
-- Changes actually implemented: Step 07 atomic segment/rectangle authoring, explicit junction reuse across click and numeric chains, length/X,Y/@dX,dY input, connected edits, thickness/reference policy, default floor/layer, visible W tool and wall inspector.
-- Tests actually run and results: current Step 07 partial debug CTest 8/8; latest native and release checks NOT RUN.
-- Windows UI evidence: docs/evidence/step06-selected.png and docs/evidence/step06-crossing-marquee.png.
+- Changes actually implemented: complete Step 07 wall chain/rectangle authoring, numeric input, explicit topology, derived L/T/X outlines, property inspector, and cancellable move previews.
+- Tests actually run and results: Step 07 debug/release 8/8; native shell 5/5; native render/interaction 12/12.
+- Windows UI evidence: docs/evidence/step07-wall-tool.png.
 - Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: implement Qt-free derived join geometry and rectangle UI, then run the full Step 07 native/release gate.
+- Next concrete action: implement Step 08 hosted opening and topology split/merge vertical slice.
 - Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md, docs/09_ARCHITECTURAL_OBJECTS.md.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 
@@ -35,8 +35,8 @@ Finish Step 07 derived L/diagonal/near-parallel/T/X joins, rectangle UI, connect
 | 04 — Transactions and undo before authoring | PASS | [STEP_04](evidence/STEP_04.md) |
 | 05 — Smooth 2D viewport and instrumentation | PASS | [STEP_05](evidence/STEP_05.md) |
 | 06 — Selection, tool lifecycle, and snapping | PASS | [STEP_06](evidence/STEP_06.md) |
-| 07 — Architectural wall authoring | IN PROGRESS | Pending |
-| 08 — Topology editing and hosted openings | NOT STARTED | Pending |
+| 07 — Architectural wall authoring | PASS | [STEP_07](evidence/STEP_07.md) |
+| 08 — Topology editing and hosted openings | IN PROGRESS | Pending |
 | 09 — General 2D drafting and editing | NOT STARTED | Pending |
 | 10 — Transforms, clipboard, groups, and layers | NOT STARTED | Pending |
 | 11 — Distance, angle, dimensions, and annotations | NOT STARTED | Pending |

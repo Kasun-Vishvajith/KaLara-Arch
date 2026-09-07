@@ -27,7 +27,7 @@ public:
     std::string commitWallNumeric(std::string_view input);
     void toggleSnap();void toggleOrtho();void toggleGrid();
     bool snapEnabled()const{return snapOptions_.enabled;}bool orthoEnabled()const{return snapOptions_.ortho;}bool gridSnapEnabled()const{return snapOptions_.grid;}
-    bool interactionActive()const{return selecting_;}
+    bool interactionActive()const{return selecting_||movingId_.has_value();}
     const render::FrameRecorder& frames()const{return frames_;}
     QImage renderImage(QSize dipSize,qreal devicePixelRatio)const;
 signals:
@@ -61,5 +61,8 @@ private:
     bool wallMode_=false;
     std::optional<architecture::WallEndpoint> wallAnchor_;
     std::optional<geometry::Point2> wallPreview_;
+    std::optional<architecture::EntityId> movingId_;
+    geometry::Point2 moveStartWorld_;
+    geometry::Vector2 moveDelta_;
 };
 }

@@ -42,6 +42,7 @@ private slots:
         QTest::keyClick(gl,Qt::Key_W);
         QVERIFY(viewport->wallToolActive());
         QVERIFY(window.statusBar()->currentMessage().startsWith("Wall"));
+        QVERIFY(window.registry().get("wall.rectangle"));
         for (bool dark : {false, true}) {
             window.setDark(dark);
             for (const QSize size : {QSize(1366, 768), QSize(1920, 1080)}) {

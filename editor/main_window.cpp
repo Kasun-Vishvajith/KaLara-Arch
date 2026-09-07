@@ -5,7 +5,9 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDialog>
+#include <QDialogButtonBox>
 #include <QDockWidget>
+#include <QFormLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QKeyEvent>
@@ -71,6 +73,7 @@ MainWindow::MainWindow(const QString& settingsFile)
     auto* edit=menuBar()->addMenu("&Edit");
     edit->addAction(add("tool.select", "&Select", QKeySequence("V"), "edit-select", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateSelectTool();wallInput_->hide();statusBar()->showMessage("Select · click, drag marquee, Shift toggles, Alt cycles"); }));
     edit->addAction(add("tool.wall", "&Wall", QKeySequence("W"), "draw-line", [this] { if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget()))viewport->activateWallTool();wallInput_->show();statusBar()->showMessage("Wall · click start, point direction, enter length/X,Y/@dX,dY · Esc cancels pending segment"); }));
+    edit->addAction(add("wall.rectangle", "Wall &Rectangle…", {}, "draw-rectangle", [this] {auto* session=activeSession();if(!session)return;QDialog dialog(this);dialog.setWindowTitle("Wall rectangle");QFormLayout form(&dialog);QLineEdit x1("0"),y1("0"),x2("6000"),y2("4000");form.addRow("First X (mm)",&x1);form.addRow("First Y (mm)",&y1);form.addRow("Opposite X (mm)",&x2);form.addRow("Opposite Y (mm)",&y2);QDialogButtonBox buttons(QDialogButtonBox::Ok|QDialogButtonBox::Cancel);form.addRow(&buttons);connect(&buttons,&QDialogButtonBox::accepted,&dialog,&QDialog::accept);connect(&buttons,&QDialogButtonBox::rejected,&dialog,&QDialog::reject);if(dialog.exec()!=QDialog::Accepted)return;const auto a=parseNumeric(x1.text().toStdString(),NumericField::absoluteX),b=parseNumeric(y1.text().toStdString(),NumericField::absoluteY),c=parseNumeric(x2.text().toStdString(),NumericField::absoluteX),d=parseNumeric(y2.text().toStdString(),NumericField::absoluteY);if(!a.canonicalValue||!b.canonicalValue||!c.canonicalValue||!d.canonicalValue){statusBar()->showMessage("Rectangle coordinates are invalid");return;}auto result=session->walls().addRectangle(session->activeFloorId(),session->wallLayerId(),{*a.canonicalValue,*b.canonicalValue},{*c.canonicalValue,*d.canonicalValue});if(const auto* failure=std::get_if<runtime::CommitFailure>(&result)){statusBar()->showMessage(QString::fromStdString(failure->diagnostics.front().message));return;}if(auto* viewport=qobject_cast<PlanViewport*>(documents_->currentWidget())){const render::SceneBuilder builder;viewport->setScene(builder.build(*session->projectStore().snapshot(),{{{-10000000,-10000000},{10000000,10000000}},session->activeFloorId()}));viewport->fitScene();}statusBar()->showMessage("Wall rectangle committed as one command"); }));
     auto* view = menuBar()->addMenu("&View");
     view->addAction(add("view.project", "Show/hide &Project", {}, "view-list-tree", [this] { hierarchy_->setVisible(!hierarchy_->isVisible()); }));
     view->addAction(add("view.inspector", "Show/hide &Inspector", {}, "document-properties", [this] { inspector_->setVisible(!inspector_->isVisible()); }));
