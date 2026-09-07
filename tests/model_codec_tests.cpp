@@ -14,15 +14,16 @@ int checks=0;void check(bool value,const char* message){++checks;if(!value)throw
 EntityHeader h(const char* id,EntityType type,const char* owner,std::optional<EntityId> layer={}){return {EntityId(id),type,EntityId(owner),std::move(layer),1,7};}
 Project fixture(bool reverse=false){
     Project project(EntityId("project-fixture"));project.title="KaLara café Ω";project.revision=7;project.display={LengthDisplayUnit::mm,2};project.targetAreaSquareMm={IntentState::undecided,{}};project.extensions={{"example.vendor.note","preserve me; never execute"}};
-    EntityId floor("floor-ground"),layer("layer-walls"),a("junction-a"),b("junction-b"),wall("wall-a"),building("building-a"),site("site-a");
+    EntityId floor("floor-ground"),layer("layer-walls"),a("junction-a"),b("junction-b"),wall("wall-a"),opening("door-a"),building("building-a"),site("site-a");
     std::vector<Entity> items;
     items.emplace_back(Site{h("site-a",EntityType::site,"project-fixture"),std::nullopt,Angle(0.2)});
     items.emplace_back(Building{h("building-a",EntityType::building,"project-fixture"),"Main",{floor}});
-    items.emplace_back(Floor{h("floor-ground",EntityType::floor,"building-a"),"Ground",0,std::nullopt,{a,b,wall}});
+    items.emplace_back(Floor{h("floor-ground",EntityType::floor,"building-a"),"Ground",0,std::nullopt,{a,b,wall,opening}});
     items.emplace_back(Layer{h("layer-walls",EntityType::layer,"project-fixture"),"Walls",true,false,true});
     items.emplace_back(Junction{h("junction-a",EntityType::junction,"floor-ground",layer),floor,{0,0}});
     items.emplace_back(Junction{h("junction-b",EntityType::junction,"floor-ground",layer),floor,{6000.125,0}});
     items.emplace_back(Wall{h("wall-a",EntityType::wall,"floor-ground",layer),floor,a,b,Length(200),ReferenceLine::center,SideConvention::tangentLeftRight,"generic-200"});
+    items.emplace_back(Opening{h("door-a",EntityType::opening,"floor-ground",layer),floor,wall,OpeningKind::door,Length(2100.25),Length(900),OpeningAnchor::distanceFromStart,HingeEnd::end,SwingSide::right,DoorPattern::singleSwing,WindowPattern::fixed,Length(0),Length(2100)});
     if(reverse)std::reverse(items.begin(),items.end());for(auto& item:items)project.entities.emplace(header(item).id,std::move(item));return project;
 }
 bool failureHas(const DecodeResult& result,const std::string& code){if(auto* failure=std::get_if<CodecFailure>(&result))for(const auto& diagnostic:failure->diagnostics)if(diagnostic.code==code)return true;return false;}

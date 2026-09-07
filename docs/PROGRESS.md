@@ -1,27 +1,27 @@
 # Implementation progress
 
 **Mode:** Autonomous after explicit pack adoption; review mode only if user requests it.
-**Current step:** 08 — IN PROGRESS.
-**Implementation status:** Steps 00–07 verified, including connected semantic wall authoring, numeric/rectangle input, derived joins, inspector edits, previews, and topology-preserving Undo. Hosted openings and split/merge remain.
+**Current step:** 09 — IN PROGRESS.
+**Implementation status:** Steps 00–08 verified. Hosted doors/windows now have true wall cutouts, procedural symbols, fit previews, tangent grips, split/merge/reversal remapping, dependency deletion, persistence, and atomic Undo.
 **Baseline repository:** 868dc8b; no tracked application source.
-**Last verified build/test:** Step 07 debug/release CTest 8/8; native shell 5/5; native render/interaction 12/12.
+**Last verified build/test:** Step 08 debug/release CTest 9/9; focused topology 23 checks; codec 24 checks; native render/interaction 14/14.
 **Release status:** NOT VERIFIED.
 
 ## Next action
 
-Implement Step 08 wall split/merge and hosted door/window semantics with real cutouts, interval validation, reversal, remapping, and Undo.
+Implement Step 09 general 2D drafting and editing as a usable command-backed vertical slice.
 
 ## Session handoff — update after each run
 
-- Active step and status: Step 08 IN PROGRESS.
-- Latest implementation commit: Step 06 commit follows f2e8a8e; use git log.
-- Changes actually implemented: complete Step 07 wall chain/rectangle authoring, numeric input, explicit topology, derived L/T/X outlines, property inspector, and cancellable move previews.
-- Tests actually run and results: Step 07 debug/release 8/8; native shell 5/5; native render/interaction 12/12.
-- Windows UI evidence: docs/evidence/step07-wall-tool.png.
+- Active step and status: Step 09 IN PROGRESS.
+- Latest implementation commit: Step 08 commit follows `2ecd8ca`; use git log.
+- Changes actually implemented: Step 08 hosted opening model, atomic topology commands, actual cutouts, procedural door/window symbols, hover fit preview, tangent grips, dependency deletion, and JSON/schema persistence.
+- Tests actually run and results: Step 08 debug/release 9/9; topology 23 checks; codec 24 checks; native render/interaction 14/14.
+- Windows UI evidence: docs/evidence/step08-opening-preview.png.
 - Open defects/blockers: larger native capture constrained by display; no active geometry blocker.
 - Files with uncommitted user changes: none detected; supplied pack adopted in baseline.
-- Next concrete action: implement Step 08 hosted opening and topology split/merge vertical slice.
-- Relevant specification/ADR: docs/05_GEOMETRY_AND_TOPOLOGY.md, docs/09_ARCHITECTURAL_OBJECTS.md.
+- Next concrete action: implement Step 09 general drafting entities, tools, editing, and tests.
+- Relevant specification/ADR: docs/steps/STEP_09.md and its linked drafting/editing contracts.
 - User-selected workflow changes: autonomous, ordinary implementation/build/test/commits authorized.
 
 ## Step ledger
@@ -36,8 +36,8 @@ Implement Step 08 wall split/merge and hosted door/window semantics with real cu
 | 05 — Smooth 2D viewport and instrumentation | PASS | [STEP_05](evidence/STEP_05.md) |
 | 06 — Selection, tool lifecycle, and snapping | PASS | [STEP_06](evidence/STEP_06.md) |
 | 07 — Architectural wall authoring | PASS | [STEP_07](evidence/STEP_07.md) |
-| 08 — Topology editing and hosted openings | IN PROGRESS | Pending |
-| 09 — General 2D drafting and editing | NOT STARTED | Pending |
+| 08 — Topology editing and hosted openings | PASS | [STEP_08](evidence/STEP_08.md) |
+| 09 — General 2D drafting and editing | IN PROGRESS | Pending |
 | 10 — Transforms, clipboard, groups, and layers | NOT STARTED | Pending |
 | 11 — Distance, angle, dimensions, and annotations | NOT STARTED | Pending |
 | 12 — Constraints and connected edit policies | NOT STARTED | Pending |

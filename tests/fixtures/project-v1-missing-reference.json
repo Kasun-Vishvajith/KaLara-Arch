@@ -17,12 +17,33 @@
             "type": "building"
         },
         {
+            "anchor": "distanceFromStart",
+            "centerOffsetMm": 2100.25,
+            "createdRevision": 1,
+            "doorPattern": "singleSwing",
+            "floorId": "floor-ground",
+            "heightMm": 2100,
+            "hingeEnd": "end",
+            "hostWallId": "wall-a",
+            "id": "door-a",
+            "kind": "door",
+            "layerId": "layer-walls",
+            "modifiedRevision": 7,
+            "ownerId": "floor-ground",
+            "sillMm": 0,
+            "swingSide": "right",
+            "type": "opening",
+            "widthMm": 900,
+            "windowPattern": "fixed"
+        },
+        {
             "createdRevision": 1,
             "elevationMm": null,
             "entityIds": [
                 "junction-a",
                 "missing-node",
-                "wall-a"
+                "wall-a",
+                "door-a"
             ],
             "id": "floor-ground",
             "modifiedRevision": 7,

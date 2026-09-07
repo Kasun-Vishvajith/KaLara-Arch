@@ -1,0 +1,68 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (0.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+[1/45] Building CXX object CMakeFiles\kalara_render.dir\render\scene.cpp.obj
+[2/45] Building CXX object CMakeFiles\wall_authoring_tests.dir\tests\wall_authoring_tests.cpp.obj
+[3/45] Building CXX object CMakeFiles\kalara_runtime.dir\architecture\wall_authoring.cpp.obj
+[4/45] Building CXX object CMakeFiles\topology_opening_tests.dir\tests\topology_opening_tests.cpp.obj
+[5/45] Building CXX object CMakeFiles\kalara_runtime.dir\runtime\command_service.cpp.obj
+[6/45] Building CXX object CMakeFiles\kalara_architecture.dir\architecture\model.cpp.obj
+[7/45] Linking CXX static library kalara_architecture.lib
+[8/45] Linking CXX static library kalara_render.lib
+[9/45] Linking CXX static library kalara_runtime.lib
+[10/45] Automatic MOC for target kalara_persistence
+[11/44] Building CXX object CMakeFiles\command_service_tests.dir\tests\command_service_tests.cpp.obj
+[12/44] Linking CXX executable wall_authoring_tests.exe
+[13/44] Linking CXX executable topology_opening_tests.exe
+[14/44] Linking CXX executable command_service_tests.exe
+[15/44] Automatic MOC for target kalara_editor
+[16/44] Building CXX object CMakeFiles\kalara_persistence.dir\persistence\migration.cpp.obj
+[17/44] Building CXX object CMakeFiles\kalara_editor.dir\editor\input_system.cpp.obj
+[18/44] Building CXX object CMakeFiles\kalara_editor.dir\editor\session.cpp.obj
+[19/44] Building CXX object CMakeFiles\kalara_editor.dir\kalara_editor_autogen\mocs_compilation.cpp.obj
+[20/44] Building CXX object CMakeFiles\kalara_persistence.dir\persistence\json_codec.cpp.obj
+[21/44] Building CXX object CMakeFiles\kalara_editor.dir\editor\plan_viewport.cpp.obj
+[22/44] Linking CXX static library kalara_persistence.lib
+[23/44] Automatic MOC for target model_codec_tests
+[24/43] Building CXX object CMakeFiles\kalara_editor.dir\editor\main_window.cpp.obj
+[25/43] Linking CXX static library kalara_editor.lib
+[26/43] Automatic MOC for target kalara_arch
+[27/42] Automatic MOC for target input_system_tests
+[28/41] Automatic MOC for target render_tests
+[29/40] Automatic MOC for target shell_tests
+[30/39] Building CXX object CMakeFiles\input_system_tests.dir\tests\input_system_tests.cpp.obj
+[31/39] Linking CXX executable input_system_tests.exe
+[32/39] Building CXX object CMakeFiles\kalara_arch.dir\editor\main.cpp.obj
+[33/39] Linking CXX executable kalara_arch.exe
+[34/39] Building CXX object CMakeFiles\model_codec_tests.dir\tests\model_codec_tests.cpp.obj
+[35/39] Linking CXX executable model_codec_tests.exe
+[36/39] Building CXX object CMakeFiles\shell_tests.dir\tests\shell_tests.cpp.obj
+[37/39] Linking CXX executable shell_tests.exe
+[38/39] Building CXX object CMakeFiles\render_tests.dir\tests\render_tests.cpp.obj
+C:\Users\kasun\Projects\Game Dev\KaLara\KaLara Arch\tests\render_tests.cpp(23): warning C4996: 'QMouseEvent::QMouseEvent': Use another constructor
+[39/39] Linking CXX executable render_tests.exe
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-release
+    Start 1: core_tests
+1/9 Test #1: core_tests .......................   Passed    0.03 sec
+    Start 2: geometry_tests
+2/9 Test #2: geometry_tests ...................   Passed    0.03 sec
+    Start 3: command_service_tests
+3/9 Test #3: command_service_tests ............   Passed    0.08 sec
+    Start 4: wall_authoring_tests
+4/9 Test #4: wall_authoring_tests .............   Passed    0.09 sec
+    Start 5: topology_opening_tests
+5/9 Test #5: topology_opening_tests ...........   Passed    0.08 sec
+    Start 6: model_codec_tests
+6/9 Test #6: model_codec_tests ................   Passed    0.10 sec
+    Start 7: shell_tests
+7/9 Test #7: shell_tests ......................   Passed    0.36 sec
+    Start 8: render_tests
+8/9 Test #8: render_tests .....................   Passed    0.83 sec
+    Start 9: input_system_tests
+9/9 Test #9: input_system_tests ...............   Passed    0.08 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   2.16 sec

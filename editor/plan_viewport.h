@@ -23,7 +23,9 @@ public:
     void setRendererMode(RendererMode mode);
     void fitScene();
     void activateSelectTool();void activateWallTool();
+    void activateOpeningTool(architecture::OpeningSpec spec);
     bool wallToolActive()const{return wallMode_;}
+    bool openingPreviewFits()const{return openingHost_.has_value()&&openingFits_;}
     std::string commitWallNumeric(std::string_view input);
     void toggleSnap();void toggleOrtho();void toggleGrid();
     bool snapEnabled()const{return snapOptions_.enabled;}bool orthoEnabled()const{return snapOptions_.ortho;}bool gridSnapEnabled()const{return snapOptions_.grid;}
@@ -59,10 +61,17 @@ private:
     std::size_t hitCycle_=0;
     bool spaceHeld_=false;
     bool wallMode_=false;
+    bool openingMode_=false;
+    architecture::OpeningSpec openingSpec_;
+    std::optional<architecture::EntityId> openingHost_;
+    geometry::Length openingOffset_;
+    bool openingFits_=false;
     std::optional<architecture::WallEndpoint> wallAnchor_;
     std::optional<geometry::Point2> wallPreview_;
     std::optional<architecture::EntityId> movingId_;
     geometry::Point2 moveStartWorld_;
     geometry::Vector2 moveDelta_;
+    geometry::Length openingDraftOffset_,openingDraftWidth_;
+    int openingResizeSide_=0;
 };
 }

@@ -4,6 +4,7 @@
 #include <charconv>
 #include <cmath>
 #include <iomanip>
+#include <iterator>
 #include <random>
 #include <sstream>
 #include <stdexcept>
@@ -50,6 +51,7 @@ bool equalEntity(const Entity& a, const Entity& b) {
         if constexpr(std::is_same_v<T,Layer>) return left.name==right.name && left.visible==right.visible && left.locked==right.locked && left.printable==right.printable;
         if constexpr(std::is_same_v<T,Junction>) return left.floorId==right.floorId && equalPoint(left.position,right.position);
         if constexpr(std::is_same_v<T,Wall>) return left.floorId==right.floorId && left.startJunctionId==right.startJunctionId && left.endJunctionId==right.endJunctionId && left.thickness.mm==right.thickness.mm && left.referenceLine==right.referenceLine && left.sideConvention==right.sideConvention && left.wallType==right.wallType;
+        if constexpr(std::is_same_v<T,Opening>) return left.floorId==right.floorId&&left.hostWallId==right.hostWallId&&left.kind==right.kind&&left.centerOffset.mm==right.centerOffset.mm&&left.width.mm==right.width.mm&&left.anchor==right.anchor&&left.hinge==right.hinge&&left.swing==right.swing&&left.doorPattern==right.doorPattern&&left.windowPattern==right.windowPattern&&left.sill.has_value()==right.sill.has_value()&&(!left.sill||left.sill->mm==right.sill->mm)&&left.height.has_value()==right.height.has_value()&&(!left.height||left.height->mm==right.height->mm);
     },a);
 }
 }
@@ -63,7 +65,7 @@ EntityId EntityId::generate(){
 Project::Project(EntityId projectId):id(std::move(projectId)){}
 const Entity* Project::find(const EntityId& entityId)const{auto it=entities.find(entityId);return it==entities.end()?nullptr:&it->second;}
 const EntityHeader& header(const Entity& entity){return std::visit([](const auto& value)->const EntityHeader&{return value.header;},entity);}
-std::string_view entityTypeName(EntityType type){switch(type){case EntityType::site:return"site";case EntityType::building:return"building";case EntityType::floor:return"floor";case EntityType::layer:return"layer";case EntityType::junction:return"junction";case EntityType::wall:return"wall";}return"unknown";}
+std::string_view entityTypeName(EntityType type){switch(type){case EntityType::site:return"site";case EntityType::building:return"building";case EntityType::floor:return"floor";case EntityType::layer:return"layer";case EntityType::junction:return"junction";case EntityType::wall:return"wall";case EntityType::opening:return"opening";}return"unknown";}
 std::vector<Diagnostic> validate(const Project& project){
     std::vector<Diagnostic> errors;
     if(project.schemaVersion!=Project::currentSchemaVersion)errors.push_back(error("schema.unsupported","Unsupported schema version",nullptr,"schemaVersion"));
@@ -92,8 +94,10 @@ std::vector<Diagnostic> validate(const Project& project){
                 if(!std::isfinite(value.thickness.mm)||value.thickness.mm<=geometry::epsilon(value.thickness.mm))errors.push_back(error("wall.thickness.invalid","Wall thickness must be positive",&h.id,"thicknessMm"));
                 if(a&&b){const auto& start=std::get<Junction>(*project.find(value.startJunctionId));const auto& end=std::get<Junction>(*project.find(value.endJunctionId));if(start.floorId!=value.floorId||end.floorId!=value.floorId)errors.push_back(error("wall.scope","Wall and junctions must share a floor",&h.id,"floorId"));else if(geometry::near(start.position,end.position,geometry::distance(start.position,end.position).mm))errors.push_back(error("wall.length.zero","Wall length is numerically zero",&h.id,"endJunctionId"));}
             }
+            if constexpr(std::is_same_v<T,Opening>){const bool host=typed(value.hostWallId,EntityType::wall,h.id,"hostWallId");typed(value.floorId,EntityType::floor,h.id,"floorId");if(h.ownerId!=value.floorId)errors.push_back(error("scope.floor","Opening owner and floor differ",&h.id,"ownerId"));if(!std::isfinite(value.centerOffset.mm)||!std::isfinite(value.width.mm)||value.width.mm<=geometry::epsilon(value.width.mm))errors.push_back(error("opening.size.invalid","Opening offset and width must be finite and width positive",&h.id,"widthMm"));if(value.sill&&(!std::isfinite(value.sill->mm)||value.sill->mm<0))errors.push_back(error("opening.sill.invalid","Opening sill must be finite and nonnegative",&h.id,"sillMm"));if(value.height&&(!std::isfinite(value.height->mm)||value.height->mm<=0))errors.push_back(error("opening.height.invalid","Opening height must be finite and positive",&h.id,"heightMm"));if(host){const auto& wall=std::get<Wall>(*project.find(value.hostWallId));if(wall.floorId!=value.floorId)errors.push_back(error("opening.scope","Opening and host wall must share a floor",&h.id,"hostWallId"));else if(const auto* av=project.find(wall.startJunctionId),*bv=project.find(wall.endJunctionId);av&&bv&&header(*av).type==EntityType::junction&&header(*bv).type==EntityType::junction){const auto& a=std::get<Junction>(*av);const auto& b=std::get<Junction>(*bv);const double length=geometry::distance(a.position,b.position).mm,lo=value.centerOffset.mm-value.width.mm/2,hi=value.centerOffset.mm+value.width.mm/2;if(lo<0||hi>length)errors.push_back(error("opening.overrun","Opening interval must fit its host wall",&h.id,"centerOffsetMm"));}}}
         },entity);
     }
+    for(auto first=project.entities.begin();first!=project.entities.end();++first){const auto* a=std::get_if<Opening>(&first->second);if(!a)continue;for(auto second=std::next(first);second!=project.entities.end();++second)if(const auto* b=std::get_if<Opening>(&second->second);b&&a->hostWallId==b->hostWallId){const double alo=a->centerOffset.mm-a->width.mm/2,ahi=a->centerOffset.mm+a->width.mm/2,blo=b->centerOffset.mm-b->width.mm/2,bhi=b->centerOffset.mm+b->width.mm/2;if(alo<bhi&&blo<ahi)errors.push_back(error("opening.overlap","Hosted opening intervals cannot overlap",&a->header.id,"centerOffsetMm"));}}
     return errors;
 }
 bool semanticallyEqual(const Project& a,const Project& b){

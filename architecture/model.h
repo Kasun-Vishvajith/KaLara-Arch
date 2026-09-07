@@ -18,7 +18,7 @@ public:
 private:
     std::string value_;
 };
-enum class EntityType { site, building, floor, layer, junction, wall };
+enum class EntityType { site, building, floor, layer, junction, wall, opening };
 struct EntityHeader {
     EntityId id;
     EntityType type;
@@ -44,7 +44,28 @@ struct Wall {
     SideConvention sideConvention = SideConvention::tangentLeftRight;
     std::string wallType;
 };
-using Entity = std::variant<Site, Building, Floor, Layer, Junction, Wall>;
+enum class OpeningKind { door, window };
+enum class OpeningAnchor { distanceFromStart, distanceFromEnd, proportional };
+enum class HingeEnd { start, end };
+enum class SwingSide { left, right };
+enum class DoorPattern { singleSwing, doubleSwing, sliding, pocket, openPassage };
+enum class WindowPattern { fixed, casement, sliding };
+struct Opening {
+    EntityHeader header;
+    EntityId floorId;
+    EntityId hostWallId;
+    OpeningKind kind=OpeningKind::door;
+    geometry::Length centerOffset;
+    geometry::Length width{900};
+    OpeningAnchor anchor=OpeningAnchor::distanceFromStart;
+    HingeEnd hinge=HingeEnd::start;
+    SwingSide swing=SwingSide::left;
+    DoorPattern doorPattern=DoorPattern::singleSwing;
+    WindowPattern windowPattern=WindowPattern::fixed;
+    std::optional<geometry::Length> sill;
+    std::optional<geometry::Length> height;
+};
+using Entity = std::variant<Site, Building, Floor, Layer, Junction, Wall, Opening>;
 enum class IntentState { undecided, known, omitted };
 template<class T> struct IntentValue { IntentState state = IntentState::undecided; std::optional<T> value; };
 enum class LengthDisplayUnit { mm, cm, m, inch, foot };

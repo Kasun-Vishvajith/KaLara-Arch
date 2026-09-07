@@ -12,6 +12,7 @@ struct WallEndpoint {
     geometry::Point2 position;
     std::optional<EntityId> junctionId;
 };
+struct OpeningSpec { OpeningKind kind=OpeningKind::door;geometry::Length width{900};OpeningAnchor anchor=OpeningAnchor::distanceFromStart;DoorPattern doorPattern=DoorPattern::singleSwing;WindowPattern windowPattern=WindowPattern::fixed;HingeEnd hinge=HingeEnd::start;SwingSide swing=SwingSide::left; };
 class WallAuthoring {
 public:
     WallAuthoring(runtime::ProjectStore& store,runtime::CommandService& commands):store_(store),commands_(commands){}
@@ -20,6 +21,13 @@ public:
     runtime::CommitResult moveJunction(const EntityId& junctionId,geometry::Point2 position);
     runtime::CommitResult translateWall(const EntityId& wallId,geometry::Vector2 delta);
     runtime::CommitResult changeThickness(const EntityId& wallId,geometry::Length thickness,ReferenceLine preserve,std::string wallType={});
+    runtime::CommitResult placeOpening(const EntityId& wallId,geometry::Length centerOffset,const OpeningSpec& spec={});
+    runtime::CommitResult editOpening(const EntityId& openingId,geometry::Length centerOffset,geometry::Length width);
+    runtime::CommitResult flipOpening(const EntityId& openingId,bool hinge,bool swing);
+    runtime::CommitResult reverseWall(const EntityId& wallId);
+    runtime::CommitResult splitWall(const EntityId& wallId,geometry::Length offset);
+    runtime::CommitResult mergeWalls(const EntityId& retainedWallId,const EntityId& removedWallId);
+    runtime::CommitResult deleteWall(const EntityId& wallId,bool includeHostedOpenings);
     const std::optional<EntityId>& lastEndJunction()const{return lastEndJunction_;}
 private:
     runtime::CommitResult apply(runtime::CommandRequest request);

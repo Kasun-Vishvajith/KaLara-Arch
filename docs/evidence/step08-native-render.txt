@@ -1,0 +1,18 @@
+********* Start testing of RenderTests *********
+Config: Using QtTest library 6.7.2, Qt 6.7.2 (x86_64-little_endian-llp64 shared (dynamic) debug build; by MSVC 2019), windows 11
+PASS   : RenderTests::initTestCase()
+PASS   : RenderTests::cameraRoundTripAndAnchor()
+PASS   : RenderTests::sceneCullingAndBounds()
+PASS   : RenderTests::hostedOpeningGeometry()
+PASS   : RenderTests::openingPlacementPreviewAndCommit()
+PASS   : RenderTests::derivedWallJoinBoundaries()
+PASS   : RenderTests::frameStatistics()
+PASS   : RenderTests::painterParityAndDpi()
+PASS   : RenderTests::idleDoesNotRedraw()
+PASS   : RenderTests::selectionInteraction()
+PASS   : RenderTests::nativeInteractionVisual()
+PASS   : RenderTests::wallToolInteraction()
+PASS   : RenderTests::sharedJunctionMovePreview()
+PASS   : RenderTests::cleanupTestCase()
+Totals: 14 passed, 0 failed, 0 skipped, 0 blacklisted, 2517ms
+********* Finished testing of RenderTests *********

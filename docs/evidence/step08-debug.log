@@ -1,0 +1,29 @@
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Could NOT find WrapVulkanHeaders (missing: Vulkan_INCLUDE_DIR) 
+-- Configuring done (0.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+ninja: no work to do.
+Test project C:/Users/kasun/Projects/Game Dev/KaLara/KaLara Arch/build/windows-debug
+    Start 1: core_tests
+1/9 Test #1: core_tests .......................   Passed    0.03 sec
+    Start 2: geometry_tests
+2/9 Test #2: geometry_tests ...................   Passed    0.04 sec
+    Start 3: command_service_tests
+3/9 Test #3: command_service_tests ............   Passed    0.04 sec
+    Start 4: wall_authoring_tests
+4/9 Test #4: wall_authoring_tests .............   Passed    0.04 sec
+    Start 5: topology_opening_tests
+5/9 Test #5: topology_opening_tests ...........   Passed    0.04 sec
+    Start 6: model_codec_tests
+6/9 Test #6: model_codec_tests ................   Passed    0.11 sec
+    Start 7: shell_tests
+7/9 Test #7: shell_tests ......................   Passed    2.01 sec
+    Start 8: render_tests
+8/9 Test #8: render_tests .....................   Passed    1.55 sec
+    Start 9: input_system_tests
+9/9 Test #9: input_system_tests ...............   Passed    0.04 sec
+
+100% tests passed out of 9
+
+Total Test time (real) =   3.93 sec
